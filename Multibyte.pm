@@ -18,7 +18,7 @@ require Exporter;
 @ISA = qw(Exporter);
 @EXPORT = qw();
 
-$VERSION = '1.04';
+$VERSION = '1.05';
 
 my $PACKAGE = 'String::Multibyte'; # __PACKAGE__
 
@@ -198,6 +198,19 @@ sub rindex {
 }
 
 #==========
+# _splitlist
+#
+sub _splitlist {
+    my @ret;
+    my ($list, $re) = @_;
+    for (ref $list eq 'ARRAY' ? @$list : $list) {
+	push @ret, /\G$re/g;
+    }
+    return @ret;
+}
+
+
+#==========
 # strspn
 #
 sub strspn {
@@ -211,13 +224,14 @@ sub strspn {
     }
     my $ret = 0;
     my(%lst);
-    @lst{ $lst=~ /$re/g } = ();
+    @lst{ _splitlist($lst, $re) } = ();
     while ($str =~ /($re)/g) {
 	last unless exists $lst{$1};
 	$ret++;
     }
     return $ret;
 }
+
 
 #==========
 # strcspn
@@ -233,7 +247,7 @@ sub strcspn {
     }
     my $ret = 0;
     my(%lst);
-    @lst{ $lst=~ /$re/g } = ();
+    @lst{ _splitlist($lst, $re) } = ();
     while ($str =~ /($re)/g) {
 	last if exists $lst{$1};
 	$ret++;
@@ -428,10 +442,13 @@ sub trclosure {
     $R = $mod =~ /R/;
     $v = $obj->{verbose};
 
-    $fr = scalar $obj->mkrange($fr, $r) unless $R;
-    @fr = $fr =~ /\G$re/g;
-    $to = scalar $obj->mkrange($to, $r) unless $R;
-    @to = $to =~ /\G$re/g;
+    for (ref $fr eq 'ARRAY' ? @$fr: $fr) {
+	push @fr, $R ? /\G$re/g : $obj->mkrange($_, $r);
+    }
+
+    for (ref $to eq 'ARRAY' ? @$to : $to) {
+	push @to, $R ? /\G$re/g : $obj->mkrange($_, $r);
+    }
 
     $c = $mod =~ /c/;
     $d = $mod =~ /d/;
@@ -631,7 +648,9 @@ will not be supported at all.
 =head2 Definition of Multibyte Charsets
 
 The definition files are sited
-under the C<$Config{installsitelib}/String/Multibyte> directory.
+under the directory where F<String::Multibyte> is sited.
+E.g. if F<String::Multibyte> is C<perl/site/lib/String/Multibyte.pm>,
+copy F<String::Multibyte::Foo> as C<perl/site/lib/String/Multibyte/Foo.pm>.
 
 The definition file must return a hashref, having key(s) named as following.
 
@@ -646,7 +665,7 @@ but keep them not conflict among another charset.
 =item C<regexp>
 
 The value for the key C<'regexp'>, REQUIRED, is a regular expression
-that matchs a single character of the concerned charset.
+that matchs a single character of charset in question.
 (You may use C<qr//> if available.)
 
 B<If the C<'regexp'> is omitted, calling any method is croaked.>
@@ -695,10 +714,6 @@ the file name of the definition file (without the suffix F<.pm>).
 It returns the instance to tell methods in which charset
 the specified strings should be handled.
 
-    $sjis = String::Multibyte->new('ShiftJIS');
-    $substr = $sjis->substr('あいうえお',2,2); # 'うえ'
-      # 'あいうえお' should be encoded in Shift_JIS.
-
 C<CHARSET> may be a hashref; this is how to define a charset
 without F<.pm> file.
 
@@ -710,8 +725,7 @@ without F<.pm> file.
 
 If true value is specified as C<VERBOSE>,
 the called method (excepting C<islegal>) will check its arguments
-and carps if any of them is not legally encoded
-in the concerned charset.
+and carps if any of them is not legally encoded.
 
 Otherwise such a check won't be carried out
 (saves a bit of time, but unsafe, though you can use
@@ -791,17 +805,28 @@ in the search list, returns C<0>.
 The string consists of characters in the search list,
 the returned value equals the length of the string.
 
+C<SEARCHLIST> can be an C<ARRAYREF>.
+e.g. if a charset treats C<CRLF> as a single character,
+C<"\r\n"> is a one-element list of only C<"\r\n">.
+A two-element list of C<"\r"> and C<"\n"> can be
+given as C<["\r", "\n"]> (of course C<"\n\r"> is also ok
+since the character order of C<SEARCHLIST> doesn't matter in C<strspn>).
+
 =item C<$mbcs-E<gt>strcspn(STRING, SEARCHLIST)>
 
 Returns returns the position of the first occurrence of
 any character contained in the search list.
 
-  $mbcs->strcspn("Perlは面白い。", "赤青黄白黒");
-  # returns 6.
-
 If the specified string does not contain any character
 in the search list,
 the returned value equals the length of the string.
+
+C<SEARCHLIST> can be an C<ARRAYREF>.
+e.g. if a charset treats C<CRLF> as a single character,
+C<"\r\n"> is a one-element list of only C<"\r\n">.
+A two-element list of C<"\r"> and C<"\n"> can be
+given as C<["\r", "\n"]> (of course C<"\n\r"> is also ok
+since the character order of C<SEARCHLIST> doesn't matter in C<strcspn>).
 
 =back
 
@@ -833,12 +858,6 @@ returned if a reference of scalar variable is used as the first argument.
 The returned lvalue is not multibyte character-oriented but byte-oriented,
 then successive assignment may lead to odd results.
 
-    $str = "0123456789";
-    $lval  = $sjis->substr(\$str,3,1);
-    $$lval = "あい";
-    $$lval = "a";
-    # $str is NOT "012aい456789", but an illegal string "012a\xA0い456789".
-
 =back
 
 =head2 Split
@@ -854,9 +873,6 @@ not by a pattern.
 
 If not in list context, only return the number of fields found,
 but does not split into the C<@_> array.
-
-  $sjis->strsplit('／', 'Perl／駱駝／Camel');
-  # ('Perl', '駱駝', 'Camel')
 
 If empty string is specified as C<SEPARATOR>, splits the specified string
 into characters.
@@ -923,18 +939,9 @@ the specified string is unaffected.
 If C<'h'> modifier is specified, returns a hash of histogram in list context;
 a reference to hash of histogram in scalar context;
 
-  $str = "なんといおうか";
-  print $mbcs->strtr(\$str,"あいうえお", "アイウエオ"), "  ", $str;
-  # output: 3  なんとイオウか
-
-  $str = "後門の狼。";
-  print $mbcs->strtr($str,"後狼。", "前虎、"), $str;
-  # output: 前門の虎、後門の狼。
-
 B<SEARCHLIST and REPLACEMENTLIST>
 
-Character ranges such as C<"ぁ-お"> (internally utilizing C<mkrange()>)
-are supported.
+Character ranges (internally utilizing C<mkrange()>) are supported.
 
 If the C<REPLACEMENTLIST> is empty (specified as C<''>, not C<undef>,
 because the use of uninitialized value causes warning under -w option),
@@ -945,8 +952,22 @@ the final character in the replacement list
 is replicated till it is long enough
 (but differently works when the 'd' modifier is used).
 
-  $mbcs->strtr(\$str, 'ぁ-んァ-ヶｦ-ﾟ', '#');
-    # replaces all Kana letters by '#'.
+C<SEARCHLIST> and C<REPLACEMENTLIST> can be an C<ARRAYREF>.
+e.g. if a charset treats C<"\r\n"> (C<CRLF>) as a single character,
+C<"\r\n"> is a one-element list of only C<"\r\n">.
+A two-element list of C<"\r"> and C<"\n"> should be
+given as C<["\r", "\n"]>. Of course C<"\n\r"> is also ok
+but B<the character order is different>;
+cf. C<strtr($str, ["\r", "\n"], ["\n", "\r"])>
+that swaps C<"\n"> and C<"\r">.
+
+Each elements of C<ARRAYREF> can include character ranges
+(the modifiers C<R> and C<r> affect their evaluation as usual).
+
+C<["A-C", "h-z"]> is evaluated like C<"A-Ch-z">
+if C<charset> does not include grapheme C<"Ch">.
+The former prevents C<"C"> and C<"h"> from evaluation as C<"Ch">
+even if the C<charset> included grapheme C<"Ch">.
 
 B<MODIFIER>
 
@@ -957,25 +978,6 @@ B<MODIFIER>
     R   No use of character ranges.
     r   Allows to use reverse character ranges.
     o   Caches the conversion table internally.
-
-  $mbcs->strtr(\$str, 'ぁ-んァ-ヶｦ-ﾟ', '');
-    # counts all Kana letters in $str.
-
-  $mbcs->strtr(\$str, 'ぁ-んァ-ヶｦ-ﾟ', '', 'h');
-    # counts all Kana letters in $str and return a histogram,
-    # like ('あ' => 3, 'が' => 1, 'ソ' => 2), etc.
-
-  $mbcs->$onlykana = strtr($str, 'ぁ-んァ-ヶｦ-ﾟ', '', 'cd');
-    # deletes all characters except Kana.
-
-  $mbcs->strtr(\$str, " \x81\x40\n\r\t\f", '', 'd');
-    # deletes all whitespace characters including full-width space
-
-  $mbcs->strtr("おかかうめぼし　ちちとはは", 'ぁ-ん', '', 's');
-    # output: おかうめぼし　ちとは
-
-  $mbcs->strtr("条件演算子の使いすぎは見苦しい", 'ぁ-ん', '＃', 'cs');
-    # output: ＃の＃いすぎは＃しい
 
 If C<'R'> modifier is specified, C<'-'> is not evaluated as a meta character
 but hyphen itself like in C<tr'''>. Compare:
@@ -1001,25 +1003,24 @@ B<Caching the conversion table>
 If C<'o'> modifier is specified, the conversion table is cached internally.
 e.g.
 
-  foreach (@hiragana_strings) {
-    print $mbcs->strtr($_, 'ぁ-ん', 'ァ-ン', 'o');
+  foreach (@source_strings) {
+    print $mbcs->strtr($_, $from_list, $to_list, 'o');
   }
-  # katakana strings are printed
 
 will be almost as efficient as this:
 
-  $hiragana_to_katakana = $mbcs->trclosure('ぁ-ん', 'ァ-ン');
+  $trans = $mbcs->trclosure($from_list, $to_list);
 
-  foreach (@hiragana_strings) {
-    print &$hiragana_to_katakana($_);
+  foreach (@source_strings) {
+    print &$trans($_);
   }
 
 You can use whichever you like.
 
 Without C<'o'>,
 
-  foreach (@hiragana_strings) {
-    print $mbcs->strtr($_, 'ぁ-ん', 'ァ-ン');
+  foreach (@source_strings) {
+    print $mbcs->strtr($_, $from_list, $to_list);
   }
 
 will be very slow since the conversion table is made
@@ -1040,17 +1041,16 @@ The return value is an only code reference, not blessed object.
 By use of this code ref, you can save yourself time
 as you need not specify arguments every time.
 
-  my $digit_tr = $mbcs->trclosure("1234567890-", "一二三四五六七八九〇－");
-  print &$digit_tr ("TEL ：0124-45-6789\n"); # ok to perl 5.003
-  print $digit_tr->("FAX ：0124-51-5368\n"); # perl 5.004 or better
-
-  # output:
-  # TEL ：〇一二四－四五－六七八九
-  # FAX ：〇一二四－五一－五三六八
+  my $trans = $mbcs->trclosure($from_list, $to_list);
+  print &$trans ($string); # ok to perl 5.003
+  print $trans->($string); # perl 5.004 or better
 
 The functionality of the closure made by C<trclosure()> is equivalent
 to that of C<strtr()>. Frankly speaking, the C<strtr()> calls
 C<trclosure()> internally and uses the returned closure.
+
+C<SEARCHLIST> and C<REPLACEMENTLIST> can be an C<ARRAYREF>
+same as C<strtr()>.
 
 =back
 

@@ -21,6 +21,7 @@ Multibyte/UTF16LE.pm
 Multibyte/UTF32BE.pm
 Multibyte/UTF32LE.pm
 Multibyte/UTF8.pm
+t/arylist.t
 t/bytes.t
 t/capture.t
 t/euc.t

@@ -20,7 +20,10 @@ print ! $dgc ||
 	0x41, 0x300, 0x301, 0xD, 0, 0x300))
     ? "ok" : "not ok", " 3\n";
 
-$reDGC = String::Multibyte->new('Grapheme')->{regexp};
+unless ($dgc) {
+    for (4..9) { print "ok $_\n" }
+} else {
+    $reDGC = String::Multibyte->new('Grapheme')->{regexp};
 
 print "\cM\cJ" =~ /^${reDGC}\z/
    && "\cM\cJ" !~ /^${reDGC}{2}\z/
@@ -38,15 +41,18 @@ print "\cJ\cM" !~ /^${reDGC}\z/
    && "\cJ\cM" =~ /^${reDGC}{2}\z/
     ? "ok" : "not ok", " 7\n";
 
-print "\x01\x{300}" !~ /^${reDGC}\z/
-   && "\x01\x{300}" =~ /^${reDGC}{2}\z/
+$ct_cc = pack ('U*', 0x01, 0x300);
+
+print $ct_cc !~ /^${reDGC}\z/
+   && $ct_cc =~ /^${reDGC}{2}\z/
     ? "ok" : "not ok", " 8\n";
 
-$hangul = "\x{1112}\x{1161}\x{11AB}\x{1100}\x{1173}\x{11AF}";
+$hangul = pack ('U*', 0x1112, 0x1161, 0x11AB, 0x1100, 0x1173, 0x11AF);
 
 print $hangul !~ /^${reDGC}\z/
    && $hangul =~ /^${reDGC}{2}\z/
     ? "ok" : "not ok", " 9\n";
+}
 
 1;
 __END__

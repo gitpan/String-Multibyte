@@ -1,5 +1,10 @@
 Revision history for Perl extension String::Multibyte.
 
+1.05  Sat Jun 07 20:46:18 2003
+    - made POD in ASCII.
+    - SEARCHLIST and REPLACEMENTLIST for strspn, strcspn, strtr, trclosure
+      may be as an ARRAYREF (an anonymous array).
+
 1.04  Sat Apr 19 09:32:00 2003
     - added UTF32BE.pm and UTF32LE.pm.
       (Perl 5.003 may work wrongly with many "\x00" characters in a string)

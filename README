@@ -1,4 +1,4 @@
-String::Multibyte.pm version 1.04
+String::Multibyte.pm version 1.05
 ================
 
 String::Multibyte - locale-independent manipulation
@@ -40,14 +40,6 @@ To install this module type the following:
 Note: t/long.t does stress tests to cope with long strings.
      If it takes long long time on your machine,
      try again after removing it.
-
-POD
-
-   The document for String::Multibyte is written in UTF-8.
-   The CPAN Archiver should make it unreadable.
-   The HTML-ized PODs are provided in my website.
-
-   http://homepage1.nifty.com/nomenclator/perl/String-Multibyte.html
 
 COPYRIGHT AND LICENCE
 
