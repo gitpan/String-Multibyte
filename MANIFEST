@@ -1,0 +1,15 @@
+Multibyte.pm
+Changes
+Makefile.PL
+MANIFEST
+README
+Multibyte/Bytes.pm
+Multibyte/ShiftJIS.pm
+Multibyte/EUC.pm
+Multibyte/EUC_JP.pm
+Multibyte/UTF8.pm
+t/bytestest.t
+t/utf8test.t
+t/sjistest.t
+t/eucjptest.t
+t/euctest.t

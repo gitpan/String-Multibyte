@@ -1,0 +1,9 @@
+Revision history for Perl extension String::Multibyte.
+
+0.02  Wed Jun 13 05:30:46 2001
+    - rename Ascii.pm to Bytes.pm
+    - add strsplit
+
+0.01  Thu Jun  7 22:36:59 2001
+    - original version; created by h2xs 1.19
+

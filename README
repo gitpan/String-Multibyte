@@ -1,0 +1,35 @@
+String::Multibyte.pm version 0.02
+================
+
+String::Multibyte - Perl module to manipulate multibyte character strings.
+
+SYNOPSIS
+
+  use String::Multibyte
+  $utf8 = String::Multibyte->new('UTF8');
+  $utf8_len = $utf8->length($utf8_str);
+
+DESCRIPTION
+
+This module provides some functions which emulate
+the corresponding CORE functions
+to manipulate multiple-byte character strings.
+
+This module uses the OOP syntax to tell methods
+in which charset the specified strings should be handled.
+
+INSTALLATION
+
+To install this module type the following:
+
+   perl Makefile.PL
+   make
+   make test
+   make install
+
+COPYRIGHT AND LICENCE
+
+Copyright(C) 2001, SADAHIRO Tomoyuki. Japan. All rights reserved.
+
+This program is free software; you can redistribute it and/or 
+modify it under the same terms as Perl itself.
