@@ -8,7 +8,7 @@ require Exporter;
 @ISA = qw(Exporter);
 @EXPORT = qw();
 
-$VERSION = '0.02';
+$VERSION = '0.03';
 
 my $PACKAGE = 'String::Multibyte'; # __PACKAGE__
 

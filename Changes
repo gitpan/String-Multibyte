@@ -1,5 +1,8 @@
 Revision history for Perl extension String::Multibyte.
 
+0.03  Sat Jun 16 10:40:21 2001
+    - remove ^M characters from all the files.
+
 0.02  Wed Jun 13 05:30:46 2001
     - rename Ascii.pm to Bytes.pm
     - add strsplit
