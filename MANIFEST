@@ -8,11 +8,9 @@ Multibyte/ShiftJIS.pm
 Multibyte/EUC.pm
 Multibyte/EUC_JP.pm
 Multibyte/UTF8.pm
-Multibyte/Unicode.pm
 t/bytestest.t
-t/bytesutf.t
 t/euctest.t
 t/eucjptest.t
 t/sjistest.t
-t/unitest.t
 t/utf8test.t
+deprecated/Unicode.pm

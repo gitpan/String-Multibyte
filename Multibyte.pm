@@ -8,7 +8,7 @@ require Exporter;
 @ISA = qw(Exporter);
 @EXPORT = qw();
 
-$VERSION = '0.04';
+$VERSION = '0.05';
 
 my $PACKAGE = 'String::Multibyte'; # __PACKAGE__
 
@@ -24,7 +24,8 @@ my $Msg_lastc  = $PACKAGE ." reach the last char before end of char range";
 #==========
 # new
 #
-sub new {
+sub new
+{
   my $class   = shift;
   my $charset = shift;
   my $verbose = shift;
@@ -39,7 +40,8 @@ sub new {
 #==========
 # islegal
 #
-sub islegal {
+sub islegal
+{
   my $obj = shift;
   my $re  = $obj->{regexp} or croak sprintf $Msg_undef, "regexp";
   return !grep !/^$re*$/, @_;
@@ -48,7 +50,8 @@ sub islegal {
 #==========
 # length
 #
-sub length {
+sub length
+{
   my $obj = shift;
   my $str = shift;
   my $re  = $obj->{regexp} or croak sprintf $Msg_undef, "regexp";
@@ -61,7 +64,8 @@ sub length {
 #==========
 # strrev
 #
-sub strrev {
+sub strrev
+{
   my $obj = shift;
   my $str = shift;
   my $re  = $obj->{regexp} or croak sprintf $Msg_undef, "regexp";
@@ -74,7 +78,8 @@ sub strrev {
 #==========
 # index
 #
-sub index{
+sub index
+{
   my $obj = shift;
   my $re  = $obj->{regexp} or croak sprintf $Msg_undef, "regexp";
   my($str,$sub,$pos) = @_;
@@ -91,20 +96,18 @@ sub index{
   my $pat = quotemeta $sub;
   if($pos && $pos > 0){
     return -1 if $pos > $len;
-    ${ $obj->substr(\$str,$pos) } =~ /^($re*?)$pat/;
-    my $head = $1;
-    defined $head ? $pos + $obj->length($head) : -1;
+    foreach(0..$pos-1){ $str =~ s/^$re//; }
+    $str =~ /^($re*?)$pat/ ? $pos + $obj->length($1) : -1;
   } else {
-    $str =~ /^($re*?)$pat/;
-    my $head = $1;
-    defined $head ? $obj->length($head) : -1;
+    $str =~ /^($re*?)$pat/ ? $obj->length($1) : -1;
   }
 }
 
 #==========
 # rindex
 #
-sub rindex{
+sub rindex
+{
   my $obj = shift;
   my $re  = $obj->{regexp} or croak sprintf $Msg_undef, "regexp";
   my($str,$sub,$pos) = @_;
@@ -130,7 +133,8 @@ sub rindex{
 #==========
 # strspn
 #
-sub strspn{
+sub strspn
+{
   my $obj = shift;
   my $re  = $obj->{regexp} or croak sprintf $Msg_undef, "regexp";
   my($str, $lst, %lst, $pos);
@@ -150,7 +154,8 @@ sub strspn{
 #==========
 # strcspn
 #
-sub strcspn{
+sub strcspn
+{
   my $obj = shift;
   my $re  = $obj->{regexp} or croak sprintf $Msg_undef, "regexp";
   my($str, $lst, %lst, $pos);
@@ -170,7 +175,8 @@ sub strcspn{
 #==========
 # substr
 # 
-sub substr{
+sub substr
+{
   my $obj = shift;
   my $re  = $obj->{regexp} or croak sprintf $Msg_undef, "regexp";
   my(@chars, $slen, $ini, $fin, $except);
@@ -197,7 +203,7 @@ sub substr{
     if($obj->{verbose} && $rep !~ /^$re*$/){
       carp sprintf $Msg_malfo, $obj->{charset};
     }
-    $_[0] = join '', @chars[0..$ini-1],$rep,@chars[$fin..@chars-1]
+    $_[0] = join '', @chars[0..$ini-1],$rep,@chars[$fin..@chars-1];
   }
   return ref $str
     ? \ CORE::substr($$str,
@@ -210,7 +216,8 @@ sub substr{
 #==========
 # mkrange
 #
-sub mkrange {
+sub mkrange
+{
   my($s, @retv, $range);
   my $obj = shift;
   my $re  = $obj->{regexp} or croak sprintf $Msg_undef, "regexp";
@@ -243,7 +250,8 @@ sub mkrange {
   wantarray ? @retv : @retv ? join('', @retv) : '';
 }
 
-sub __expand {
+sub __expand
+{
   my $obj = shift;
   my($fr,$to,$rev) = @_;
 
@@ -268,7 +276,8 @@ sub __expand {
 #
 my %Cache;
 
-sub strtr {
+sub strtr
+{
   my $obj = shift;
   my $re  = $obj->{regexp} or croak sprintf $Msg_undef, "regexp";
   my $str = shift;
@@ -290,7 +299,8 @@ sub strtr {
 #============
 # trclosure
 #
-sub trclosure {
+sub trclosure
+{
   my(@fr, @to, $h, $r, $R, $c, $d, $s, $v, $i, %hash);
   my $obj = shift;
   my $re  = $obj->{regexp} or croak sprintf $Msg_undef, "regexp";
@@ -393,7 +403,8 @@ sub trclosure {
 #============
 # strsplit
 #
-sub strsplit{
+sub strsplit
+{
   my $obj = shift;
   my $re  = $obj->{regexp} or croak sprintf $Msg_undef, "regexp";
   my $pat = quotemeta shift;

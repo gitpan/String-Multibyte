@@ -1,4 +1,4 @@
-String::Multibyte.pm version 0.04
+String::Multibyte.pm version 0.05
 ================
 
 String::Multibyte - Perl module to manipulate multibyte character strings.

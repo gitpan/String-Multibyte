@@ -1,5 +1,8 @@
 Revision history for Perl extension String::Multibyte.
 
+0.05  Wed Sep 12 23:23:14 2001
+    - remove ::Unicode.pm, that cannot pass all the test.
+
 0.04  Fri Sep 07 23:03:25 2001
     - bug fix: "" for length and r?index.
     - strtr returns a histogram if 'h' modifier is given.
