@@ -1,5 +1,12 @@
 Revision history for Perl extension String::Multibyte.
 
+0.04  Fri Sep 07 23:03:25 2001
+    - bug fix: "" for length and r?index.
+    - strtr returns a histogram if 'h' modifier is given.
+    - add ::Unicode.pm
+      that counts upon the core unicode support.
+      (maybe works only on Perl 5.7 or later)
+
 0.03  Sat Jun 16 10:40:21 2001
     - remove ^M characters from all the files.
 

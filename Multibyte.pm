@@ -8,7 +8,7 @@ require Exporter;
 @ISA = qw(Exporter);
 @EXPORT = qw();
 
-$VERSION = '0.03';
+$VERSION = '0.04';
 
 my $PACKAGE = 'String::Multibyte'; # __PACKAGE__
 
@@ -30,6 +30,7 @@ sub new {
   my $verbose = shift;
   my $pm = "$Path/$charset.pm";
   my $self = do($pm) or croak "not exist $pm";
+  my $re = $self->{regexp} or croak sprintf $Msg_undef, "regexp";
   if($verbose){ $self->{verbose} = $verbose }
   if(!defined $self->{charset}){ $self->{charset} = $charset }
   return bless $self, $class;
@@ -41,7 +42,7 @@ sub new {
 sub islegal {
   my $obj = shift;
   my $re  = $obj->{regexp} or croak sprintf $Msg_undef, "regexp";
-  !grep !/^$re*$/, @_;
+  return !grep !/^$re*$/, @_;
 }
 
 #==========
@@ -54,7 +55,7 @@ sub length {
   if($obj->{verbose} && $str !~ /^$re*$/){
     carp sprintf $Msg_malfo, $obj->{charset};
   }
-  scalar( $str =~ s/$re//g );
+  return 0 + $str =~ s/$re//g;
 }
 
 #==========
@@ -67,7 +68,7 @@ sub strrev {
   if($obj->{verbose} && $str !~ /^$re*$/){
     carp sprintf $Msg_malfo, $obj->{charset};
   }
-  join '', reverse $str =~ /$re/g;
+  return join '', reverse $str =~ /$re/g;
 }
 
 #==========
@@ -80,9 +81,16 @@ sub index{
   if($obj->{verbose} &&( $str !~ /^$re*$/ || $sub !~ /^$re*$/) ){
     carp sprintf $Msg_malfo, $obj->{charset};
   }
+  my $len = $obj->length($str);
+  if($sub eq ""){
+    return @_ == 3 ? 
+        $pos < 0    ? 0 :
+        $pos < $len ? $pos : $len
+      : 0;
+  }
   my $pat = quotemeta $sub;
-  $pos = 0 if $pos < 0;
-  if($pos){
+  if($pos && $pos > 0){
+    return -1 if $pos > $len;
     ${ $obj->substr(\$str,$pos) } =~ /^($re*?)$pat/;
     my $head = $1;
     defined $head ? $pos + $obj->length($head) : -1;
@@ -103,11 +111,18 @@ sub rindex{
   if($obj->{verbose} &&( $str !~ /^$re*$/ || $sub !~ /^$re*$/) ){
     carp sprintf $Msg_malfo, $obj->{charset};
   }
+  my $len = $obj->length($str);
+  if($sub eq ""){
+    return @_ == 3 ? 
+        $pos < 0    ? 0 :
+        $pos < $len ? $pos : $len
+      : $len;
+  }
+  return -1 if $pos && $pos < 0;
   my $pat = quotemeta $sub;
-  return -1 if $pos < 0;
-  (defined $pos
-	? ${ $obj->substr(\$str, 0, $pos + $obj->length($sub)) }
-	: $str) =~ /^($re*)$pat/;
+  (@_ == 3 
+    ? ${ $obj->substr(\$str, 0, $pos + $obj->length($sub)) }
+    : $str) =~ /^($re*)$pat/;
   my $head = $1;
   defined $head ? $obj->length($head) : -1;
 }
@@ -189,7 +204,7 @@ sub substr{
               CORE::length(join '', @chars[0..$ini-1]),
               CORE::length(join '', @chars[$ini..$fin-1])
       )
-    : join '', @chars[$ini..$fin-1]
+    : join('', @chars[$ini..$fin-1])
 }
 
 #==========
@@ -276,15 +291,20 @@ sub strtr {
 # trclosure
 #
 sub trclosure {
-  my(@fr, @to, $r, $R, $c, $d, $s, $v, $i, %hash);
+  my(@fr, @to, $h, $r, $R, $c, $d, $s, $v, $i, %hash);
   my $obj = shift;
   my $re  = $obj->{regexp} or croak sprintf $Msg_undef, "regexp";
-  my($fr, $to, $mod) = @_;
+
+  my $fr  = shift;
+  my $to  = shift;
+  my $mod = @_ ? shift : '';
 
   my $msg = sprintf $Msg_malfo, $obj->{charset};
+
   if($obj->{verbose} && ($fr !~ /^$re*$/ || $to !~ /^$re*$/) ){ carp $msg }
-  $r = defined $mod && $mod =~ /r/;
-  $R = defined $mod && $mod =~ /R/;
+  $h = $mod =~ /h/;
+  $r = $mod =~ /r/;
+  $R = $mod =~ /R/;
   $v = $obj->{verbose};
 
   $fr = scalar $obj->mkrange($fr, $r) unless $R;
@@ -292,9 +312,9 @@ sub trclosure {
   $to = scalar $obj->mkrange($to, $r) unless $R;
   @to = $to =~ /\G$re/g;
 
-  $c = defined $mod && $mod =~ /c/;
-  $d = defined $mod && $mod =~ /d/;
-  $s = defined $mod && $mod =~ /s/;
+  $c = $mod =~ /c/;
+  $d = $mod =~ /d/;
+  $s = $mod =~ /s/;
   $mod = $s * 4 + $d * 2 + $c;
 
   for($i = 0; $i < @fr; $i++){
@@ -308,60 +328,66 @@ sub trclosure {
       sub { # $c: true, $d: true, $s: true/false, $mod: 3 or 7
         my $str = shift;
         if($v && (ref $str ? $$str : $str) !~ /^$re*$/){ carp $msg }
-        my $cnt = 0;
+        my $cnt = 0; my %cnt = ();
         (ref $str ? $$str : $str) =~ s{($re)}{
-          exists $hash{$1} ? $1 : (++$cnt, '');
+          exists $hash{$1} ? $1 : (++$cnt, ++$cnt{$1}, '');
         }ge;
-        return ref $str ? $cnt : $str;
+        return $h ? wantarray ? %cnt : \%cnt
+                  : ref $str  ? $cnt : $str;
       } :
     $mod == 5 ?
       sub { # $c: true, $d: false, $s: true, $mod: 5
         my $str = shift;
         if($v && (ref $str ? $$str : $str) !~ /^$re*$/){ carp $msg }
-        my $cnt = 0;
+        my $cnt = 0; my %cnt = ();
         my $pre = '';
         my $now;
         (ref $str ? $$str : $str) =~ s{($re)}{
-          exists $hash{$1} ? ($pre = '', $1) : (++$cnt, 
+          exists $hash{$1} ? ($pre = '', $1) : (++$cnt, ++$cnt{$1},
             $now = @to ? $to[-1] : $1, 
             $now eq $pre ? '' : ($pre = $now) 
           );
         }ge;
-        ref $str ? $cnt : $str;
+        return $h ? wantarray ? %cnt : \%cnt
+                  : ref $str  ? $cnt : $str;
       } :
     $mod == 4 || $mod == 6 ?
       sub { # $c: false, $d: true/false, $s: true, $mod: 4 or 6
         my $str = shift;
         if($v && (ref $str ? $$str : $str) !~ /^$re*$/){ carp $msg }
-        my $cnt = 0;
+        my $cnt = 0; my %cnt = ();
         my $pre = '';
         (ref $str ? $$str : $str) =~ s{($re)}{
-          exists $hash{$1} ? (++$cnt, 
+          exists $hash{$1} ? (++$cnt, ++$cnt{$1},
              $hash{$1} eq '' || $hash{$1} eq $pre ? '' : ($pre = $hash{$1})
           ) : ($pre = '', $1);
         }ge;
-        ref $str ? $cnt : $str;
+        return $h ? wantarray ? %cnt : \%cnt
+                  : ref $str  ? $cnt : $str;
       } :
     $mod == 1 ?
       sub { # $c: true, $d: false, $s: false, $mod: 1
         my $str = shift;
         if($v && (ref $str ? $$str : $str) !~ /^$re*$/){ carp $msg }
-        my $cnt = 0;
+        my $cnt = 0; my %cnt = ();
         (ref $str ? $$str : $str) =~ s{($re)}{
-          exists $hash{$1} ? $1 : (++$cnt, @to) ? $to[-1] : $1;
+          exists $hash{$1} ? $1 : (++$cnt, ++$cnt{$1}, @to) ? $to[-1] : $1;
         }ge;
-        ref $str ? $cnt : $str;
+        return $h ? wantarray ? %cnt : \%cnt
+                  : ref $str  ? $cnt : $str;
       } :
     $mod == 0 || $mod == 2 ?
       sub { # $c: false, $d: true/false, $s: false, $mod:  0 or 2
         my $str = shift;
         if($v && (ref $str ? $$str : $str) !~ /^$re*$/){ carp $msg }
-        my $cnt = 0;
+        my $cnt = 0; my %cnt = ();
         (ref $str ? $$str : $str) =~ s{($re)}{
-          exists $hash{$1} ? (++$cnt, $hash{$1}) : $1;
+          exists $hash{$1} ? (++$cnt, ++$cnt{$1}, $hash{$1}) : $1;
         }ge;
-        ref $str ? $cnt : $str;
-      } : sub { croak sprintf $Msg_panic, "trclosure! Invalid Closure!" }
+        return $h ? wantarray ? %cnt : \%cnt
+                  : ref $str  ? $cnt : $str;
+      } :
+      sub { croak sprintf $Msg_panic, "trclosure! Invalid Closure!" }
 }
 
 #============
@@ -667,6 +693,9 @@ returns the number of characters replaced or deleted;
 otherwise, returns the transliterated string and
 the specified string is unaffected.
 
+If C<'h'> modifier is specified, returns a hash of histogram in list context;
+a reference to hash of histogram in scalar context;
+
   $str = "なんといおうか";
   print $mbcs->strtr(\$str,"あいうえお", "アイウエオ"), "  ", $str;
   # output: 3  なんとイオウか
@@ -697,12 +726,17 @@ B<MODIFIER>
     c   Complement the SEARCHLIST.
     d   Delete found but unreplaced characters.
     s   Squash duplicate replaced characters.
+    h   Return a hash (or a hashref) of histogram.
     R   No use of character ranges.
     r   Allows to use reverse character ranges.
     o   Caches the conversion table internally.
 
   $mbcs->strtr(\$str, 'ぁ-んァ-ヶｦ-ﾟ', '');
     # counts all Kana letters in $str. 
+
+
+  $mbcs->strtr(\$str, 'ぁ-んァ-ヶｦ-ﾟ', '', 'h');
+    # counts all Kana letters in $str and return a histogram. 
 
   $mbcs->$onlykana = strtr($str, 'ぁ-んァ-ヶｦ-ﾟ', '', 'cd');
     # deletes all characters except Kana. 

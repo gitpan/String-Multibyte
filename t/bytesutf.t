@@ -3,9 +3,17 @@
 
 ######################### We start with some black magic to print on failure.
 
-BEGIN { $| = 1; print "1..28\n"; }
+BEGIN {
+  $| = 1;
+  $] >= 5.007 or
+    print "1..0 # Skip: Perl 5.7 or later is recommended." and exit 0;
+  print "1..28\n";
+}
 END {print "not ok 1\n" unless $loaded;}
+
 use String::Multibyte;
+use utf8;
+
 $^W = 1;
 $loaded = 1;
 print "ok 1\n";
@@ -18,31 +26,31 @@ my $bytes = String::Multibyte->new('Bytes',1);
   my $v;
   my $NG = 0;
   for(
-	"äøéöÉeÉXÉg",
+	"Êº¢Â≠ó„ÉÜ„Çπ„Éà",
 	"abc",
-	"±≤≥¥µ",
-	" ﬂ∞Ÿ=Perl",
+	"ÔΩ±ÔΩ≤ÔΩ≥ÔΩ¥ÔΩµ",
+	"ÔæäÔæüÔΩ∞Ôæô=Perl",
 	"\001\002\003\000\n",
 	"",
 	" ",
-	'Å@',
-	"ÇªÇÍÇ‡ÇªÇ§Çæ\xFF\xFF",
-	"Ç«Ç§Ç…Ç‡Ç±Ç§Ç…Ç‡\x81\x39",
+	'„ÄÄ',
+	"„Åù„Çå„ÇÇ„Åù„ÅÜ„Å†\xFF\xFF",
+	"„Å©„ÅÜ„Å´„ÇÇ„Åì„ÅÜ„Å´„ÇÇ\x81\x39",
 	"\x91\x00",
-	"Ç±ÇÍÇÕ\xFFÇ«Ç§Ç©Ç»",
+	"„Åì„Çå„ÅØ\xFF„Å©„ÅÜ„Åã„Å™",
   ){ $NG++ unless $bytes->islegal($_) }
 
   print ! $NG
-  && $bytes->islegal("Ç†", "P", "", "∂›ºﬁ test")
-  && $bytes->islegal("ì˙ñ{","Ç≥kanji","\xA0","PERL")
+  && $bytes->islegal("„ÅÇ", "P", "", "ÔΩ∂ÔæùÔΩºÔæû test")
+  && $bytes->islegal("Êó•Êú¨","„Åïkanji","\xA0","PERL")
 	? "ok" : "not ok", " 2\n";
 }
 
 print 0 == $bytes->length("")
   &&  3 == $bytes->length("abc")
-  &&  5 == $bytes->length("±≤≥¥µ")
-  && 20 == $bytes->length("Ç†Ç©Ç≥ÇΩÇ»ÇÕÇ‹Ç‚ÇÁÇÌ")
-  && 13 == $bytes->length('AIUEOì˙ñ{äøéö')
+  && 15 == $bytes->length("ÔΩ±ÔΩ≤ÔΩ≥ÔΩ¥ÔΩµ")
+  && 30 == $bytes->length("„ÅÇ„Åã„Åï„Åü„Å™„ÅØ„Åæ„ÇÑ„Çâ„Çè")
+  && 17 == $bytes->length('AIUEOÊó•Êú¨Êº¢Â≠ó')
   ? "ok" : "not ok", " 3\n";
 
 print $bytes->mkrange("") eq ""
@@ -84,8 +92,8 @@ print $bytes->mkrange("") eq ""
 
 {
   my($str,$ref);
-  $ref = 'µ¥≥≤±OEUIAoeuia';
-  $str = 'aiueoAIUEO±≤≥¥µ';
+  $ref = 'OEUIAoeuia';
+  $str = 'aiueoAIUEO';
   print $ref eq $bytes->strrev($str)
     && $bytes->strspn ("+0.12345*12", "+-.0123456789") == 8
     && $bytes->strcspn("Perl5.6", "0123456789") == 4
@@ -100,13 +108,13 @@ print $bytes->mkrange("") eq ""
 {
   my $digit_tr = $bytes->trclosure(
     "1234567890-",
-    "ABCDEFGHIJ="
+    "ABCDEFGHIJ=",
   );
 
-  my $frstr1 = "TELÅF0124-45-6789\n";
-  my $tostr1 = "TELÅFJABD=DE=FGHI\n";
-  my $frstr2 = "FAXÅF0124-51-5368\n";
-  my $tostr2 = "FAXÅFJABD=EA=ECFH\n";
+  my $frstr1 = "TEL:0124-45-6789\n";
+  my $tostr1 = "TEL:JABD=DE=FGHI\n";
+  my $frstr2 = "FAX:0124-51-5368\n";
+  my $tostr2 = "FAX:JABD=EA=ECFH\n";
 
   my $restr1 = &$digit_tr($frstr1);
   my $restr2 = &$digit_tr($frstr2);

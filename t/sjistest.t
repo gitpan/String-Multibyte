@@ -3,7 +3,7 @@
 
 ######################### We start with some black magic to print on failure.
 
-BEGIN { $| = 1; print "1..33\n"; }
+BEGIN { $| = 1; print "1..36\n"; }
 END {print "not ok 1\n" unless $loaded;}
 use String::Multibyte;
 $^W = 1;
@@ -12,7 +12,7 @@ print "ok 1\n";
 
 ######################### End of black magic.
 
-my $sjis = String::Multibyte->new('ShiftJIS',1);
+my $mb = String::Multibyte->new('ShiftJIS',1);
 
 {
   my $v;
@@ -26,42 +26,92 @@ my $sjis = String::Multibyte->new('ShiftJIS',1);
 	"",
 	" ",
 	'@',
-  ){ $NG++ unless $sjis->islegal($_) }
+  ){ $NG++ unless $mb->islegal($_) }
 
   for(
 	"‚»‚ê‚à‚»‚¤‚¾\xFF\xFF",
 	"‚Ç‚¤‚É‚à‚±‚¤‚É‚à\x81\x39",
 	"\x91\x00",
 	"‚±‚ê‚Í\xFF‚Ç‚¤‚©‚È",
-  ){ $NG++ unless ! $sjis->islegal($_) }
+  ){ $NG++ unless ! $mb->islegal($_) }
 
   print ! $NG
-  && $sjis->islegal("‚ ", "P", "", "¶İ¼Ş test")
-  && ! $sjis->islegal("“ú–{","‚³kanji","\xA0","PERL")
+  && $mb->islegal("‚ ", "P", "", "¶İ¼Ş test")
+  && ! $mb->islegal("“ú–{","‚³kanji","\xA0","PERL")
 	? "ok" : "not ok", " 2\n";
 }
 
-print 0 == $sjis->length("")
-  &&  3 == $sjis->length("abc")
-  &&  5 == $sjis->length("±²³´µ")
-  && 10 == $sjis->length("‚ ‚©‚³‚½‚È‚Í‚Ü‚â‚ç‚í")
-  &&  9 == $sjis->length('AIUEO“ú–{Š¿š')
+print 0 eq $mb->length("")
+  &&  3 eq $mb->length("abc")
+  &&  4 eq $mb->length("abc\n")
+  &&  5 eq $mb->length("±²³´µ")
+  && 10 eq $mb->length("‚ ‚©‚³‚½‚È‚Í‚Ü‚â‚ç‚í")
+  && 14 eq $mb->length("‚ ‚©‚³‚½‚È\n\n‚Í‚Ü‚â‚ç‚í\n\n")
+  &&  9 eq $mb->length('AIUEO“ú–{Š¿š')
   ? "ok" : "not ok", " 3\n";
 
-print $sjis->mkrange("") eq ""
-  &&  $sjis->mkrange('-+\-XYZ-') eq "-+-XYZ-"
-  &&  $sjis->mkrange("A-D") eq "ABCD"
-  &&  $sjis->mkrange("‚Ÿ-‚¤") eq "‚Ÿ‚ ‚¡‚¢‚£‚¤"
-  &&  $sjis->mkrange("0-9‚O-‚X") eq "0123456789‚O‚P‚Q‚R‚S‚T‚U‚V‚W‚X"
-  &&  $sjis->mkrange("-0") eq "-0"
-  &&  $sjis->mkrange("0-9") eq "0123456789"
-  &&  $sjis->mkrange("0-9",1) eq "0123456789"
-  &&  $sjis->mkrange("9-0",1) eq "9876543210"
-  &&  $sjis->mkrange("0-9-5",1) eq "01234567898765"
-  &&  $sjis->mkrange("0-9-5-7",1) eq "0123456789876567"
-  &&  $sjis->mkrange('•\-') eq '•\-'
-  &&  $sjis->mkrange('ab-') eq 'ab-'
+print $mb->mkrange("") eq ""
+  &&  $mb->mkrange('-+\-XYZ-') eq "-+-XYZ-"
+  &&  $mb->mkrange("A-D") eq "ABCD"
+  &&  $mb->mkrange("‚Ÿ-‚¤") eq "‚Ÿ‚ ‚¡‚¢‚£‚¤"
+  &&  $mb->mkrange("0-9‚O-‚X") eq "0123456789‚O‚P‚Q‚R‚S‚T‚U‚V‚W‚X"
+  &&  $mb->mkrange("-0") eq "-0"
+  &&  $mb->mkrange("0-9") eq "0123456789"
+  &&  $mb->mkrange("0-9",1) eq "0123456789"
+  &&  $mb->mkrange("9-0",1) eq "9876543210"
+  &&  $mb->mkrange("0-9-5",1) eq "01234567898765"
+  &&  $mb->mkrange("0-9-5-7",1) eq "0123456789876567"
+  &&  $mb->mkrange('•\-') eq '•\-'
+  &&  $mb->mkrange('ab-') eq 'ab-'
   ? "ok" : "not ok", " 4\n";
+
+print $mb->index("", ""    )   eq index("", ""    )
+   && $mb->index("", "", -1)   eq index("", "", -1)
+   && $mb->index("", "",  0)   eq index("", "",  0)
+   && $mb->index("", "",  1)   eq index("", "",  1)
+   && $mb->index("", "", 10)   eq index("", "", 10)
+   && $mb->index("", "a"   )   eq index("", "a"   )
+   && $mb->index("", "a", -1)  eq index("", "a", -1)
+   && $mb->index("", "a",  0)  eq index("", "a",  0)
+   && $mb->index("", "a",  1)  eq index("", "a",  1)
+   && $mb->index("", "a", 10)  eq index("", "a", 10)
+   && $mb->index(" a", ""    ) eq index(" a", ""    )
+   && $mb->index(" a", "", -1) eq index(" a", "", -1)
+   && $mb->index(" a", "",  0) eq index(" a", "",  0)
+   && $mb->index(" a", "",  1) eq index(" a", "",  1)
+   && $mb->index(" a", "",  2) eq index(" a", "",  2)
+   && $mb->index(" a", "", 10) eq index(" a", "", 10)
+   && $mb->index(" a", "a"   ) eq index(" a", "a"   )
+   && $mb->index(" a", "a",-1) eq index(" a", "a",-1)
+   && $mb->index(" a", "a", 0) eq index(" a", "a", 0)
+   && $mb->index(" a", "a", 1) eq index(" a", "a", 1)
+   && $mb->index(" a", "a", 2) eq index(" a", "a", 2)
+   && $mb->index(" a", "a",10) eq index(" a", "a",10)
+  ? "ok" : "not ok", " 5\n";
+
+print $mb->rindex("", ""    )   eq rindex("", "")
+   && $mb->rindex("", "", -1)   eq rindex("", "", -1)
+   && $mb->rindex("", "",  0)   eq rindex("", "",  0)
+   && $mb->rindex("", "",  1)   eq rindex("", "",  1)
+   && $mb->rindex("", "", 10)   eq rindex("", "", 10)
+   && $mb->rindex("", "a"    )  eq rindex("", "a"    )
+   && $mb->rindex("", "a", -1)  eq rindex("", "a", -1)
+   && $mb->rindex("", "a",  0)  eq rindex("", "a",  0)
+   && $mb->rindex("", "a",  1)  eq rindex("", "a",  1)
+   && $mb->rindex("", "a", 10)  eq rindex("", "a", 10)
+   && $mb->rindex(" a", ""    ) eq rindex(" a", ""    )
+   && $mb->rindex(" a", "", -1) eq rindex(" a", "", -1)
+   && $mb->rindex(" a", "",  0) eq rindex(" a", "",  0)
+   && $mb->rindex(" a", "",  1) eq rindex(" a", "",  1)
+   && $mb->rindex(" a", "",  2) eq rindex(" a", "",  2)
+   && $mb->rindex(" a", "", 10) eq rindex(" a", "", 10)
+   && $mb->rindex(" a", "a"   ) eq rindex(" a", "a"   )
+   && $mb->rindex(" a", "a",-1) eq rindex(" a", "a",-1)
+   && $mb->rindex(" a", "a", 0) eq rindex(" a", "a", 0)
+   && $mb->rindex(" a", "a", 1) eq rindex(" a", "a", 1)
+   && $mb->rindex(" a", "a", 2) eq rindex(" a", "a", 2)
+   && $mb->rindex(" a", "a",10) eq rindex(" a", "a",10)
+  ? "ok" : "not ok", " 6\n";
 
 {
   my $str = '+0.1231425126-*12346';
@@ -75,44 +125,44 @@ print $sjis->mkrange("") eq ""
   $NG = 0;
   for $pos (-10..18){
     $si = index($str,$sub,$pos);
-    $bi = $sjis->index($zen,$sbz,$pos);
+    $bi = $mb->index($zen,$sbz,$pos);
     $NG++ if $si != $bi;
   }
-  print !$NG ? "ok" : "not ok", " 5\n";
+  print !$NG ? "ok" : "not ok", " 7\n";
 
   $NG = 0;
   for $pos (-10..16){
     $si = rindex($str,$sub,$pos);
-    $bi = $sjis->rindex($zen,$sbz,$pos);
+    $bi = $mb->rindex($zen,$sbz,$pos);
     $NG++ if $si != $bi;
   }
-  print !$NG ? "ok" : "not ok", " 6\n";
+  print !$NG ? "ok" : "not ok", " 8\n";
 }
 
 {
   my($str,$ref);
   $ref = 'šŠ¿–{“úµ´³²±OEUIAoeuia‚¨‚¦‚¤‚¢‚ ';
   $str = '‚ ‚¢‚¤‚¦‚¨aiueoAIUEO±²³´µ“ú–{Š¿š';
-  print $ref eq $sjis->strrev($str)
-    && $sjis->strspn ("+0.12345*12", "+-.0123456789") == 8
-    && $sjis->strcspn("Perl‚Í–Ê”’‚¢B", "ÔÂ‰©”’•") == 6
-    ? "ok" : "not ok", " 7\n";
+  print $ref eq $mb->strrev($str)
+    && $mb->strspn ("+0.12345*12", "+-.0123456789") == 8
+    && $mb->strcspn("Perl‚Í–Ê”’‚¢B", "ÔÂ‰©”’•") == 6
+    ? "ok" : "not ok", " 9\n";
 }
 
 {
   my $str = "‚È‚ñ‚Æ‚¢‚¨‚¤‚©";
 print
- $sjis->strtr(\$str,"‚ ‚¢‚¤‚¦‚¨", "ƒAƒCƒEƒGƒI")." ".$str eq "3 ‚È‚ñ‚ÆƒCƒIƒE‚©"
- && $sjis->strtr('‚¨‚©‚©‚¤‚ß‚Ú‚µ@‚¿‚¿‚Æ‚Í‚Í', '‚Ÿ-‚ñ', '', 's')
+ $mb->strtr(\$str,"‚ ‚¢‚¤‚¦‚¨", "ƒAƒCƒEƒGƒI")." ".$str eq "3 ‚È‚ñ‚ÆƒCƒIƒE‚©"
+ && $mb->strtr('‚¨‚©‚©‚¤‚ß‚Ú‚µ@‚¿‚¿‚Æ‚Í‚Í', '‚Ÿ-‚ñ', '', 's')
 	eq '‚¨‚©‚¤‚ß‚Ú‚µ@‚¿‚Æ‚Í'
- && $sjis->strtr("ğŒ‰‰Zq‚Ìg‚¢‚·‚¬‚ÍŒ©‹ê‚µ‚¢", '‚Ÿ-‚ñ', '”', 'cs')
+ && $mb->strtr("ğŒ‰‰Zq‚Ìg‚¢‚·‚¬‚ÍŒ©‹ê‚µ‚¢", '‚Ÿ-‚ñ', '”', 'cs')
 	eq '”‚Ì”‚¢‚·‚¬‚Í”‚µ‚¢'
- && $sjis->strtr("90 - 32 = 58", "0-9", "A-J") eq "JA - DC = FI"
- && $sjis->strtr("90 - 32 = 58", "0-9", "A-J", "R") eq "JA - 32 = 58"
-  ? "ok" : "not ok", " 8\n";
+ && $mb->strtr("90 - 32 = 58", "0-9", "A-J") eq "JA - DC = FI"
+ && $mb->strtr("90 - 32 = 58", "0-9", "A-J", "R") eq "JA - 32 = 58"
+  ? "ok" : "not ok", " 10\n";
 }
 {
-  my $digit_tr = $sjis->trclosure(
+  my $digit_tr = $mb->trclosure(
     "1234567890-",
     "ˆê“ñOlŒÜ˜Zµ”ª‹ãZ|"
   );
@@ -126,11 +176,11 @@ print
   my $restr2 = &$digit_tr($frstr2);
 
   print $tostr1 eq $restr1 && $tostr2 eq $restr2
-    ? "ok" : "not ok", " 9\n";
+    ? "ok" : "not ok", " 11\n";
 }
 
 {
-  my $printZ2H = $sjis->trclosure(
+  my $printZ2H = $mb->trclosure(
     '‚O-‚X‚`-‚y‚-‚š@{|HI”“•—–ƒ„ijmnop',
     '0-9A-Za-z =+\-?!#$%&@*<>()[]{}',
   );
@@ -144,11 +194,11 @@ print
     next if 5.004 > $] && $i < -8;
     local $^W = 0;
     my $s = substr($str,$i);
-    my $t = $sjis->substr($zen,$i);
+    my $t = $mb->substr($zen,$i);
     for($s,$t){$_ = 'undef' if ! defined $_;}
     ++$NG unless $s eq &$printZ2H($t);
   }
-  print ! $NG ? "ok" : "not ok", " 10\n";
+  print ! $NG ? "ok" : "not ok", " 12\n";
 
   $NG = 0;
   for $i (-10..10){
@@ -156,12 +206,12 @@ print
     for $j (undef,-10..10){
       local $^W = 0;
       my $s = substr($str,$i,$j);
-      my $t = $sjis->substr($zen,$i,$j);
+      my $t = $mb->substr($zen,$i,$j);
       for($s,$t){$_ = 'undef' if ! defined $_;}
       ++$NG unless $s eq &$printZ2H($t);
     }
   }
-  print ! $NG ? "ok" : "not ok", " 11\n";
+  print ! $NG ? "ok" : "not ok", " 13\n";
 
   $NG = 0;
   for $i (-8..8){
@@ -169,10 +219,10 @@ print
     my $s = $str; 
     my $t = $zen;
     substr($s,$i) = "RE";
-    ${ $sjis->substr(\$t,$i) } = "‚q‚d";
+    ${ $mb->substr(\$t,$i) } = "‚q‚d";
     ++$NG unless $s eq &$printZ2H($t);
   }
-  print ! $NG ? "ok" : "not ok", " 12\n";
+  print ! $NG ? "ok" : "not ok", " 14\n";
 
   $NG = 0;
   for $i (-8..8){
@@ -181,11 +231,11 @@ print
       my $s = $str; 
       my $t = $zen;
       substr($s,$i,$j) = "RE";
-      ${ $sjis->substr(\$t,$i,$j) } = "‚q‚d";
+      ${ $mb->substr(\$t,$i,$j) } = "‚q‚d";
       ++$NG unless $s eq &$printZ2H($t);
     }
   }
-  print ! $NG ? "ok" : "not ok", " 13\n";
+  print ! $NG ? "ok" : "not ok", " 15\n";
 
   $NG = 0;
   for $i (-8..8){
@@ -196,38 +246,38 @@ print
       my $t = $zen;
       my $core;
       eval '$core = substr($s,$i,$j,"OK")';
-      my $mbcs = $sjis->substr($t,$i,$j,"‚n‚j");
+      my $mbcs = $mb->substr($t,$i,$j,"‚n‚j");
       ++$NG unless $s eq &$printZ2H($t) && $core eq &$printZ2H($mbcs);
     }
   }
-  print ! $NG ? "ok" : "not ok", " 14\n";
+  print ! $NG ? "ok" : "not ok", " 16\n";
 }
 
 {
   my $NG;
 
-  my $digitH = $sjis->mkrange('0-9');
-  my $digitZ = $sjis->mkrange('‚O-‚X');
-  my $lowerH = $sjis->mkrange('a-z');
-  my $lowerZ = $sjis->mkrange('‚-‚š');
-  my $upperH = $sjis->mkrange('A-Z');
-  my $upperZ = $sjis->mkrange('‚`-‚y');
-  my $alphaH = $sjis->mkrange('A-Za-z');
-  my $alphaZ = $sjis->mkrange('‚`-‚y‚-‚š');
-  my $alnumH = $sjis->mkrange('0-9A-Za-z');
-  my $alnumZ = $sjis->mkrange('‚O-‚X‚`-‚y‚-‚š');
+  my $digitH = $mb->mkrange('0-9');
+  my $digitZ = $mb->mkrange('‚O-‚X');
+  my $lowerH = $mb->mkrange('a-z');
+  my $lowerZ = $mb->mkrange('‚-‚š');
+  my $upperH = $mb->mkrange('A-Z');
+  my $upperZ = $mb->mkrange('‚`-‚y');
+  my $alphaH = $mb->mkrange('A-Za-z');
+  my $alphaZ = $mb->mkrange('‚`-‚y‚-‚š');
+  my $alnumH = $mb->mkrange('0-9A-Za-z');
+  my $alnumZ = $mb->mkrange('‚O-‚X‚`-‚y‚-‚š');
 
-  my $digitZ2H = $sjis->trclosure($digitZ, $digitH);
-  my $upperZ2H = $sjis->trclosure($upperZ, $upperH);
-  my $lowerZ2H = $sjis->trclosure($lowerZ, $lowerH);
-  my $alphaZ2H = $sjis->trclosure($alphaZ, $alphaH);
-  my $alnumZ2H = $sjis->trclosure($alnumZ, $alnumH);
+  my $digitZ2H = $mb->trclosure($digitZ, $digitH);
+  my $upperZ2H = $mb->trclosure($upperZ, $upperH);
+  my $lowerZ2H = $mb->trclosure($lowerZ, $lowerH);
+  my $alphaZ2H = $mb->trclosure($alphaZ, $alphaH);
+  my $alnumZ2H = $mb->trclosure($alnumZ, $alnumH);
 
-  my $digitH2Z = $sjis->trclosure($digitH, $digitZ);
-  my $upperH2Z = $sjis->trclosure($upperH, $upperZ);
-  my $lowerH2Z = $sjis->trclosure($lowerH, $lowerZ);
-  my $alphaH2Z = $sjis->trclosure($alphaH, $alphaZ);
-  my $alnumH2Z = $sjis->trclosure($alnumH, $alnumZ);
+  my $digitH2Z = $mb->trclosure($digitH, $digitZ);
+  my $upperH2Z = $mb->trclosure($upperH, $upperZ);
+  my $lowerH2Z = $mb->trclosure($lowerH, $lowerZ);
+  my $alphaH2Z = $mb->trclosure($alphaH, $alphaZ);
+  my $alnumH2Z = $mb->trclosure($alnumH, $alnumZ);
 
   my($H,$Z,$tr);
   for $H ($digitH, $lowerH, $upperH){
@@ -240,53 +290,53 @@ print
       ++$NG unless $Z eq &$tr($Z);
     }
   }
-  print !$NG ? "ok" : "not ok", " 15\n";
+  print !$NG ? "ok" : "not ok", " 17\n";
 
   print $digitZ eq &$digitH2Z($digitH)
      && $digitH eq &$upperH2Z($digitH)
      && $digitH eq &$lowerH2Z($digitH)
      && $digitH eq &$alphaH2Z($digitH)
      && $digitZ eq &$alnumH2Z($digitH)
-      ? "ok" : "not ok", " 16\n";
+      ? "ok" : "not ok", " 18\n";
   print $upperH eq &$digitH2Z($upperH)
      && $upperZ eq &$upperH2Z($upperH)
      && $upperH eq &$lowerH2Z($upperH)
      && $upperZ eq &$alphaH2Z($upperH)
      && $upperZ eq &$alnumH2Z($upperH)
-      ? "ok" : "not ok", " 17\n";
+      ? "ok" : "not ok", " 19\n";
   print $lowerH eq &$digitH2Z($lowerH)
      && $lowerH eq &$upperH2Z($lowerH)
      && $lowerZ eq &$lowerH2Z($lowerH)
      && $lowerZ eq &$alphaH2Z($lowerH)
      && $lowerZ eq &$alnumH2Z($lowerH)
-      ? "ok" : "not ok", " 18\n";
+      ? "ok" : "not ok", " 20\n";
   print $digitH eq &$digitZ2H($digitZ)
      && $digitZ eq &$upperZ2H($digitZ)
      && $digitZ eq &$lowerZ2H($digitZ)
      && $digitZ eq &$alphaZ2H($digitZ)
      && $digitH eq &$alnumZ2H($digitZ)
-      ? "ok" : "not ok", " 19\n";
+      ? "ok" : "not ok", " 21\n";
   print $upperZ eq &$digitZ2H($upperZ)
      && $upperH eq &$upperZ2H($upperZ)
      && $upperZ eq &$lowerZ2H($upperZ)
      && $upperH eq &$alphaZ2H($upperZ)
      && $upperH eq &$alnumZ2H($upperZ)
-      ? "ok" : "not ok", " 20\n";
+      ? "ok" : "not ok", " 22\n";
   print $lowerZ eq &$digitZ2H($lowerZ)
      && $lowerZ eq &$upperZ2H($lowerZ)
      && $lowerH eq &$lowerZ2H($lowerZ)
      && $lowerH eq &$alphaZ2H($lowerZ)
      && $lowerH eq &$alnumZ2H($lowerZ)
-      ? "ok" : "not ok", " 21\n";
+      ? "ok" : "not ok", " 23\n";
 }
 
 {
   my($a,$b,$c,$d);
 
   $a = $b = "abcdefg-123456789";
-  $c = $sjis->strtr(\$a,'a-cd','15-7','R');
+  $c = $mb->strtr(\$a,'a-cd','15-7','R');
   $d = $b =~ tr'a-cd'15-7';
-  print $a eq $b && $c == $d ? "ok" : "not ok", " 22\n";
+  print $a eq $b && $c == $d ? "ok" : "not ok", " 24\n";
 
   my @uc = ("", "I", "IA", "AIS", "ASIB","AAA");
   my @lc = ("", "i", "ia", "ais", "asib","aba");
@@ -300,16 +350,16 @@ print
       for $j(0..$#lc){
         $mstr = $cstr = $str;
         $ccnt = eval "\$cstr =~ tr/$uc[$i]/$lc[$j]/$mod[$m];";
-        $mcnt = $sjis->strtr(\$mstr, $uc[$i], $lc[$j], $mod[$m]);
+        $mcnt = $mb->strtr(\$mstr, $uc[$i], $lc[$j], $mod[$m]);
         ++$NG unless $cstr eq $mstr && $ccnt == $mcnt;
       }
     }
-    print ! $NG ? "ok" : "not ok", " ", $m+23, "\n"; 
+    print ! $NG ? "ok" : "not ok", " ", $m+25, "\n"; 
   }
 }
 
 {
-  my $printZ2H = $sjis->trclosure(
+  my $printZ2H = $mb->trclosure(
     '‚O-‚X‚`-‚y‚-‚š@^{|DCFGHI”“•—–ƒ„ijmnop',
     '0-9A-Za-z /=+\-.,:;?!#$%&@*<>()[]{}',
   );
@@ -323,26 +373,31 @@ print
   $NG = 0;
   for $n (-1..20){
     my $core = @{[ split(//, $str, $n) ]};
-    my $mbcs = $sjis->strsplit('',$zen,$n);
+    my $mbcs = $mb->strsplit('',$zen,$n);
     ++$NG unless $core == $mbcs;
   }
-  print !$NG ? "ok" : "not ok", " 31\n";
+  print !$NG ? "ok" : "not ok", " 33\n";
 
 # splitchar in list context
   $NG = 0;
   for $n (-1..20){
     my $core = join ':', split //, $str, $n;
-    my $mbcs = join ':', $sjis->strsplit('',$zen,$n);
+    my $mbcs = join ':', $mb->strsplit('',$zen,$n);
     ++$NG unless $core eq &$printZ2H($mbcs);
   }
-  print !$NG ? "ok" : "not ok", " 32\n";
+  print !$NG ? "ok" : "not ok", " 34\n";
 
 # split / / in list context
   $NG = 0;
   for $n (-1..5){
     my $core = join ':', split(/ /, $str, $n);
-    my $mbcs = join ':', $sjis->strsplit(' ',$str,$n);
+    my $mbcs = join ':', $mb->strsplit(' ',$str,$n);
     ++$NG unless $core eq &$printZ2H($mbcs);
   }
-  print !$NG ? "ok" : "not ok", " 33\n";
+  print !$NG ? "ok" : "not ok", " 35\n";
 }
+
+my %h = $mb->strtr("hotchpotch", "a-z", '', 'h');
+print "c-2;h-3;o-2;p-1;t-2;" eq join('', map { "$_-$h{$_};" } sort keys %h)
+  ? "ok" : "not ok", " 36\n";
+

@@ -1,4 +1,4 @@
-String::Multibyte.pm version 0.03
+String::Multibyte.pm version 0.04
 ================
 
 String::Multibyte - Perl module to manipulate multibyte character strings.
@@ -6,8 +6,8 @@ String::Multibyte - Perl module to manipulate multibyte character strings.
 SYNOPSIS
 
   use String::Multibyte
-  $utf8 = String::Multibyte->new('UTF8');
-  $utf8_len = $utf8->length($utf8_str);
+  $sjis = String::Multibyte->new('ShiftJIS');
+  $sjis_len = $sjis->length($sjis_str);
 
 DESCRIPTION
 

@@ -3,8 +3,14 @@
 
 ######################### We start with some black magic to print on failure.
 
-BEGIN { $| = 1; print "1..36\n"; }
+BEGIN {
+  $| = 1;
+  $] >= 5.007 or
+    print "1..0 # Skip: Perl 5.7 or later is recommended." and exit 0;
+  print "1..36\n";
+}
 END {print "not ok 1\n" unless $loaded;}
+
 use String::Multibyte;
 $^W = 1;
 $loaded = 1;
@@ -12,57 +18,49 @@ print "ok 1\n";
 
 ######################### End of black magic.
 
-my $mb = String::Multibyte->new('EUC_JP',1);
+use utf8;
+my $mb = String::Multibyte->new('Unicode',1);
 
 {
   my $v;
   my $NG = 0;
   for(
-	"´Á»ú¥Æ¥¹¥È",
+	"æ¼¢å­—ãƒ†ã‚¹ãƒˆ",
 	"abc",
-	"Ž±Ž²Ž³Ž´Žµ",
-	"ŽÊŽßŽ°ŽÙ=Perl",
+	"ï½±ï½²ï½³ï½´ï½µ",
+	"ï¾Šï¾Ÿï½°ï¾™=Perl",
 	"\001\002\003\000\n",
 	"",
 	" ",
-	'¡¡',
+	'ã€€',
   ){ $NG++ unless $mb->islegal($_) }
 
-  for(
-	"¤½¤ì¤â¤½¤¦¤À\xFF\xFF",
-	"¤É¤¦¤Ë¤â¤³¤¦¤Ë¤â\x81\x39",
-	"\x91\x00",
-	"¤³¤ì¤Ï\xFF¤É¤¦¤«¤Ê",
-  ){ $NG++ unless ! $mb->islegal($_) }
-
   print ! $NG
-  && $mb->islegal("¤¢", "P", "", "Ž¶ŽÝŽ¼ŽÞ test")
-  && ! $mb->islegal("ÆüËÜ","¤µkanji","\xA0","PERL")
-	? "ok" : "not ok", " 2\n";
+  && $mb->islegal("ã‚", "P", "", "ï½¶ï¾ï½¼ï¾ž test") 
+   ? "ok" : "not ok", " 2\n";
 }
-
 
 print 0 eq $mb->length("")
   &&  3 eq $mb->length("abc")
   &&  4 eq $mb->length("abc\n")
-  &&  5 eq $mb->length("Ž±Ž²Ž³Ž´Žµ")
-  && 10 eq $mb->length("¤¢¤«¤µ¤¿¤Ê¤Ï¤Þ¤ä¤é¤ï")
-  && 14 eq $mb->length("¤¢¤«¤µ¤¿¤Ê\n\n¤Ï¤Þ¤ä¤é¤ï\n\n")
-  &&  9 eq $mb->length('AIUEOÆüËÜ´Á»ú')
+  &&  5 eq $mb->length("ï½±ï½²ï½³ï½´ï½µ")
+  && 10 eq $mb->length("ã‚ã‹ã•ãŸãªã¯ã¾ã‚„ã‚‰ã‚")
+  && 14 eq $mb->length("ã‚ã‹ã•ãŸãª\n\nã¯ã¾ã‚„ã‚‰ã‚\n\n")
+  &&  9 eq $mb->length('AIUEOæ—¥æœ¬æ¼¢å­—')
   ? "ok" : "not ok", " 3\n";
 
 print $mb->mkrange("") eq ""
   &&  $mb->mkrange('-+\-XYZ-') eq "-+-XYZ-"
   &&  $mb->mkrange("A-D") eq "ABCD"
-  &&  $mb->mkrange("¤¡-¤¦") eq "¤¡¤¢¤£¤¤¤¥¤¦"
-  &&  $mb->mkrange("0-9£°-£¹") eq "0123456789£°£±£²£³£´£µ£¶£·£¸£¹"
+  &&  $mb->mkrange("ã-ã†") eq "ãã‚ãƒã„ã…ã†"
+  &&  $mb->mkrange("0-9ï¼-ï¼™") eq "0123456789ï¼ï¼‘ï¼’ï¼“ï¼”ï¼•ï¼–ï¼—ï¼˜ï¼™"
   &&  $mb->mkrange("-0") eq "-0"
   &&  $mb->mkrange("0-9") eq "0123456789"
   &&  $mb->mkrange("0-9",1) eq "0123456789"
   &&  $mb->mkrange("9-0",1) eq "9876543210"
   &&  $mb->mkrange("0-9-5",1) eq "01234567898765"
   &&  $mb->mkrange("0-9-5-7",1) eq "0123456789876567"
-  &&  $mb->mkrange('É½-') eq 'É½-'
+  &&  $mb->mkrange('è¡¨-') eq 'è¡¨-'
   &&  $mb->mkrange('ab-') eq 'ab-'
   ? "ok" : "not ok", " 4\n";
 
@@ -116,9 +114,9 @@ print $mb->rindex("", ""    )   eq rindex("", "")
 
 {
   my $str = '+0.1231425126-*12346';
-  my $zen = '¡Ü£°¡¥£±£²3£±£´£²£µ£±£²6-¡ö£±£²£³4£¶';
+  my $zen = 'ï¼‹ï¼ï¼Žï¼‘ï¼’3ï¼‘ï¼”ï¼’ï¼•ï¼‘ï¼’6-ï¼Šï¼‘ï¼’ï¼“4ï¼–';
   my $sub = '12';
-  my $sbz = '£±£²';
+  my $sbz = 'ï¼‘ï¼’';
   my($pos,$si, $bi);
 
   my $n = 1;
@@ -142,22 +140,22 @@ print $mb->rindex("", ""    )   eq rindex("", "")
 
 {
   my($str,$ref);
-  $ref = '»ú´ÁËÜÆüŽµŽ´Ž³Ž²Ž±OEUIAoeuia¤ª¤¨¤¦¤¤¤¢';
-  $str = '¤¢¤¤¤¦¤¨¤ªaiueoAIUEOŽ±Ž²Ž³Ž´ŽµÆüËÜ´Á»ú';
+  $ref = 'å­—æ¼¢æœ¬æ—¥ï½µï½´ï½³ï½²ï½±OEUIAoeuiaãŠãˆã†ã„ã‚';
+  $str = 'ã‚ã„ã†ãˆãŠaiueoAIUEOï½±ï½²ï½³ï½´ï½µæ—¥æœ¬æ¼¢å­—';
   print $ref eq $mb->strrev($str)
     && $mb->strspn ("+0.12345*12", "+-.0123456789") == 8
-    && $mb->strcspn("Perl¤ÏÌÌÇò¤¤¡£", "ÀÖÀÄ²«Çò¹õ") == 6
+    && $mb->strcspn("Perlã¯é¢ç™½ã„ã€‚", "èµ¤é’é»„ç™½é»’") == 6
     ? "ok" : "not ok", " 9\n";
 }
 
 {
-  my $str = "¤Ê¤ó¤È¤¤¤ª¤¦¤«";
+  my $str = "ãªã‚“ã¨ã„ãŠã†ã‹";
 print
- $mb->strtr(\$str,"¤¢¤¤¤¦¤¨¤ª", "¥¢¥¤¥¦¥¨¥ª")." ".$str eq "3 ¤Ê¤ó¤È¥¤¥ª¥¦¤«"
- && $mb->strtr('¤ª¤«¤«¤¦¤á¤Ü¤·¡¡¤Á¤Á¤È¤Ï¤Ï', '¤¡-¤ó', '', 's')
-	eq '¤ª¤«¤¦¤á¤Ü¤·¡¡¤Á¤È¤Ï'
- && $mb->strtr("¾ò·ï±é»»»Ò¤Î»È¤¤¤¹¤®¤Ï¸«¶ì¤·¤¤", '¤¡-¤ó', '¡ô', 'cs')
-	eq '¡ô¤Î¡ô¤¤¤¹¤®¤Ï¡ô¤·¤¤'
+ $mb->strtr(\$str,"ã‚ã„ã†ãˆãŠ", "ã‚¢ã‚¤ã‚¦ã‚¨ã‚ª")." ".$str eq "3 ãªã‚“ã¨ã‚¤ã‚ªã‚¦ã‹"
+ && $mb->strtr('ãŠã‹ã‹ã†ã‚ã¼ã—ã€€ã¡ã¡ã¨ã¯ã¯', 'ã-ã‚“', '', 's')
+	eq 'ãŠã‹ã†ã‚ã¼ã—ã€€ã¡ã¨ã¯'
+ && $mb->strtr("æ¡ä»¶æ¼”ç®—å­ã®ä½¿ã„ã™ãŽã¯è¦‹è‹¦ã—ã„", 'ã-ã‚“', 'ï¼ƒ', 'cs')
+	eq 'ï¼ƒã®ï¼ƒã„ã™ãŽã¯ï¼ƒã—ã„'
  && $mb->strtr("90 - 32 = 58", "0-9", "A-J") eq "JA - DC = FI"
  && $mb->strtr("90 - 32 = 58", "0-9", "A-J", "R") eq "JA - 32 = 58"
   ? "ok" : "not ok", " 10\n";
@@ -165,13 +163,13 @@ print
 {
   my $digit_tr = $mb->trclosure(
     "1234567890-",
-    "°ìÆó»°»Í¸ÞÏ»¼·È¬¶å¡»¡Ý"
+    "ä¸€äºŒä¸‰å››äº”å…­ä¸ƒå…«ä¹ã€‡ï¼"
   );
 
-  my $frstr1 = "TEL¡§0124-45-6789\n";
-  my $tostr1 = "TEL¡§¡»°ìÆó»Í¡Ý»Í¸Þ¡ÝÏ»¼·È¬¶å\n";
-  my $frstr2 = "FAX¡§0124-51-5368\n";
-  my $tostr2 = "FAX¡§¡»°ìÆó»Í¡Ý¸Þ°ì¡Ý¸Þ»°Ï»È¬\n";
+  my $frstr1 = "TELï¼š0124-45-6789\n";
+  my $tostr1 = "TELï¼šã€‡ä¸€äºŒå››ï¼å››äº”ï¼å…­ä¸ƒå…«ä¹\n";
+  my $frstr2 = "FAXï¼š0124-51-5368\n";
+  my $tostr2 = "FAXï¼šã€‡ä¸€äºŒå››ï¼äº”ä¸€ï¼äº”ä¸‰å…­å…«\n";
 
   my $restr1 = &$digit_tr($frstr1);
   my $restr2 = &$digit_tr($frstr2);
@@ -182,12 +180,12 @@ print
 
 {
   my $printZ2H = $mb->trclosure(
-    '£°-£¹£Á-£Ú£á-£ú¡¡¡á¡Ü¡Ý¡©¡ª¡ô¡ð¡ó¡õ¡÷¡ö¡ã¡ä¡Ê¡Ë¡Î¡Ï¡Ð¡Ñ',
+    'ï¼-ï¼™ï¼¡-ï¼ºï½-ï½šã€€ï¼ï¼‹ï¼ï¼Ÿï¼ï¼ƒï¼„ï¼…ï¼†ï¼ ï¼Šï¼œï¼žï¼ˆï¼‰ï¼»ï¼½ï½›ï½',
     '0-9A-Za-z =+\-?!#$%&@*<>()[]{}',
   );
   my $NG;
   my $str = '01234567';
-  my $zen = '0£±£²£³456£·';
+  my $zen = '0ï¼‘ï¼’ï¼“456ï¼—';
   my($i,$j);
 
   $NG = 0;
@@ -220,7 +218,7 @@ print
     my $s = $str; 
     my $t = $zen;
     substr($s,$i) = "RE";
-    ${ $mb->substr(\$t,$i) } = "£Ò£Å";
+    ${ $mb->substr(\$t,$i) } = "ï¼²ï¼¥";
     ++$NG unless $s eq &$printZ2H($t);
   }
   print ! $NG ? "ok" : "not ok", " 14\n";
@@ -232,7 +230,7 @@ print
       my $s = $str; 
       my $t = $zen;
       substr($s,$i,$j) = "RE";
-      ${ $mb->substr(\$t,$i,$j) } = "£Ò£Å";
+      ${ $mb->substr(\$t,$i,$j) } = "ï¼²ï¼¥";
       ++$NG unless $s eq &$printZ2H($t);
     }
   }
@@ -247,7 +245,7 @@ print
       my $t = $zen;
       my $core;
       eval '$core = substr($s,$i,$j,"OK")';
-      my $mbcs = $mb->substr($t,$i,$j,"£Ï£Ë");
+      my $mbcs = $mb->substr($t,$i,$j,"ï¼¯ï¼«");
       ++$NG unless $s eq &$printZ2H($t) && $core eq &$printZ2H($mbcs);
     }
   }
@@ -258,15 +256,15 @@ print
   my $NG;
 
   my $digitH = $mb->mkrange('0-9');
-  my $digitZ = $mb->mkrange('£°-£¹');
+  my $digitZ = $mb->mkrange('ï¼-ï¼™');
   my $lowerH = $mb->mkrange('a-z');
-  my $lowerZ = $mb->mkrange('£á-£ú');
+  my $lowerZ = $mb->mkrange('ï½-ï½š');
   my $upperH = $mb->mkrange('A-Z');
-  my $upperZ = $mb->mkrange('£Á-£Ú');
+  my $upperZ = $mb->mkrange('ï¼¡-ï¼º');
   my $alphaH = $mb->mkrange('A-Za-z');
-  my $alphaZ = $mb->mkrange('£Á-£Ú£á-£ú');
+  my $alphaZ = $mb->mkrange('ï¼¡-ï¼ºï½-ï½š');
   my $alnumH = $mb->mkrange('0-9A-Za-z');
-  my $alnumZ = $mb->mkrange('£°-£¹£Á-£Ú£á-£ú');
+  my $alnumZ = $mb->mkrange('ï¼-ï¼™ï¼¡-ï¼ºï½-ï½š');
 
   my $digitZ2H = $mb->trclosure($digitZ, $digitH);
   my $upperZ2H = $mb->trclosure($upperZ, $upperH);
@@ -361,12 +359,12 @@ print
 
 {
   my $printZ2H = $mb->trclosure(
-    '£°-£¹£Á-£Ú£á-£ú¡¡¡¿¡á¡Ü¡Ý¡¥¡¤¡§¡¨¡©¡ª¡ô¡ð¡ó¡õ¡÷¡ö¡ã¡ä¡Ê¡Ë¡Î¡Ï¡Ð¡Ñ',
+    'ï¼-ï¼™ï¼¡-ï¼ºï½-ï½šã€€ï¼ï¼ï¼‹ï¼ï¼Žï¼Œï¼šï¼›ï¼Ÿï¼ï¼ƒï¼„ï¼…ï¼†ï¼ ï¼Šï¼œï¼žï¼ˆï¼‰ï¼»ï¼½ï½›ï½',
     '0-9A-Za-z /=+\-.,:;?!#$%&@*<>()[]{}',
   );
 
   my $str = '  This  is   a  TEST =@ ';
-  my $zen = '¡¡ T£èi£ó¡¡ is¡¡ ¡¡a  £Ô£ÅST¡¡¡á@ ';
+  my $zen = 'ã€€ Tï½ˆiï½“ã€€ isã€€ ã€€a  ï¼´ï¼¥STã€€ï¼@ ';
 
   my($n, $NG);
 

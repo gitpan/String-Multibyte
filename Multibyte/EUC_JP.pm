@@ -3,7 +3,7 @@ package String::Multibyte::EUC_JP;
 #  EUC-JP
 #
 #  the character order:
-#  (\x00 .. \x7E,			# X 0201 and X 0211 CL
+#  (\x00 .. \x7E,			# X 0201 GL and X 0211 CL
 #   \x8E\xA1 .. \x8E\xDF,		# X 0201 kana
 #   \xA1\xA1 .. \xFE\xFE,		# X 0208
 #   \x8F\xA1\xA1 .. \x8F\xFE\xFE)	# X 0212 and X 0213 2nd plane
