@@ -1,7 +1,7 @@
 package String::Multibyte::EUC;
 
 use vars qw($VERSION);
-$VERSION = 1.00;
+$VERSION = '1.01';
 
 +{
     charset  => 'EUC',
@@ -53,7 +53,7 @@ for EUC encodings
 C<String::Multibyte::EUC> is used for manipulation of strings in EUC
 comprising C<C0>, C<G0>, and C<G1> in which a double-byte set is invoked.
 
-Character order: C<0x00..0x7E>, C<0xA1A1..0xFEFE>
+Character order: C<0x00..0x7F>, C<0xA1A1..0xFEFE>
 
 =head1 CAVEAT
 

@@ -1,7 +1,7 @@
 package String::Multibyte::EUC_JP;
 
 use vars qw($VERSION);
-$VERSION = 1.00;
+$VERSION = '1.01';
 
 +{
     charset  => 'EUC-JP',
@@ -64,11 +64,11 @@ String::Multibyte::EUC_JP - internally used by String::Multibyte for EUC-JP
 C<String::Multibyte::EUC_JP> is used for manipulation of strings
 in EUC-JP like encodings.
 
-Character order: C<0x00..0x7E>, C<0x8EA1..0x8EDF>, C<0xA1A1..0xFEFE>,
+Character order: C<0x00..0x7F>, C<0x8EA1..0x8EDF>, C<0xA1A1..0xFEFE>,
 C<0x8FA1A1..0x8FFEFE>.
 
                                        EUC-JP         EUC-JISX0213
-  1.  0x00..0x7E         C0/G0      ASCII          ASCII
+  1.  0x00..0x7F         C0/G0      ASCII          ASCII
   2.  0x8EA1..0x8EDF       G2       JIS kana       JIS kana
   3.  0xA1A1..0xFEFE       G1       JIS X 0208     JIS X 0213 plane-1
   4.  0x8FA1A1..0x8FFEFE   G3       JIS X 0212     JIS X 0213 plane-2

@@ -79,7 +79,7 @@ for $cs (qw/Bytes EUC EUC_JP ShiftJIS UTF8 UTF16BE UTF16LE Unicode/) {
 
     # splitchar in scalar context
     $NG = 0;
-    for $n (-1..20) {
+    for ($n = -1; $n <= 20; $n++) {
 	my $core = @{[ split(//, $str, $n) ]};
 	my $mbcs = $mb->strsplit('',$zen,$n);
 	++$NG unless $core == $mbcs;
@@ -88,7 +88,7 @@ for $cs (qw/Bytes EUC EUC_JP ShiftJIS UTF8 UTF16BE UTF16LE Unicode/) {
 
     # splitchar in list context
     $NG = 0;
-    for $n (-1..20) {
+    for ($n = -1; $n <= 20; $n++) {
 	my $core = list2str('CORE', split //, $str, $n );
 	my $mbcs = list2str($cs, $mb->strsplit('',$zen,$n) );
 	++$NG unless $core eq str2asc($cs, &$tr($mbcs));
@@ -97,7 +97,7 @@ for $cs (qw/Bytes EUC EUC_JP ShiftJIS UTF8 UTF16BE UTF16LE Unicode/) {
 
     # split / / in list context
     $NG = 0;
-    for $n (-1..5) {
+    for ($n = -1; $n <= 5; $n++) {
 	my $core = list2str('CORE', split(/ /, $str, $n));
 	my $mbcs = list2str($cs,  $mb->strsplit($sp,$zen,$n) );
 	++$NG unless $core eq str2asc($cs, &$tr($mbcs));
@@ -106,7 +106,7 @@ for $cs (qw/Bytes EUC EUC_JP ShiftJIS UTF8 UTF16BE UTF16LE Unicode/) {
 
     # splitchar of null string in scalar context
     $NG = 0;
-    for $n (-1..20) {
+    for ($n = -1; $n <= 20; $n++) {
 	my $core = @{[ split(//, '', $n) ]};
 	my $mbcs = $mb->strsplit('','',$n);
 	++$NG unless $core == $mbcs;
@@ -115,7 +115,7 @@ for $cs (qw/Bytes EUC EUC_JP ShiftJIS UTF8 UTF16BE UTF16LE Unicode/) {
 
    # splitchar of null string in list context
     $NG = 0;
-    for $n (-1..20) {
+    for ($n = -1; $n <= 20; $n++) {
 	my $core = list2str('CORE', split //, '', $n);
 	my $mbcs = list2str($cs, $mb->strsplit('','',$n));
 	++$NG unless $core eq str2asc($cs, $mbcs);
@@ -124,7 +124,7 @@ for $cs (qw/Bytes EUC EUC_JP ShiftJIS UTF8 UTF16BE UTF16LE Unicode/) {
 
     # split / /, '' in list context
     $NG = 0;
-    for $n (-1..5) {
+    for ($n = -1; $n <= 5; $n++) {
 	my $core = list2str('CORE', split(/ /, '', $n) );
 	my $mbcs = list2str($cs, $mb->strsplit($sp, '', $n) );
 	++$NG unless $core eq str2asc($cs, $mbcs);

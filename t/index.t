@@ -1,5 +1,5 @@
 
-BEGIN { $| = 1; print "1..33\n"; }
+BEGIN { $| = 1; print "1..37\n"; }
 END {print "not ok 1\n" unless $loaded;}
 use String::Multibyte;
 $^W = 1;
@@ -148,6 +148,73 @@ for $cs (qw/Bytes EUC EUC_JP ShiftJIS UTF8 UTF16BE UTF16LE Unicode/) {
     }
     print $NG == 0 ? "ok" : "not ok", " ", ++$loaded, "\n";
 }
+
+# see perlfaq6
+$martian  = String::Multibyte->new({
+	charset => "martian",
+	regexp => '[A-Z][A-Z]|[^A-Z]',
+    },1);
+
+print $martian->index("", "") == 0
+   && $martian->index("", "a") == -1
+   && $martian->index(" ", "") == 0
+   && $martian->index(" ", "", 1) == 1
+   && $martian->index("", " ", 1) == -1
+   && $martian->index(" ", "a", -1) == -1
+   && $martian->index("AZAAazZA", "ZA") == 4
+    ? "ok" : "not ok", " ", ++$loaded, "\n";
+
+print $martian->rindex("", "") == 0
+   && $martian->rindex("", "a") == -1
+   && $martian->rindex(" ", "") == 1
+   && $martian->rindex(" ", "", 1) == 1
+   && $martian->rindex("", " ", 1) == -1
+   && $martian->rindex(" ", "a", -1) == -1
+   && $martian->rindex("AZAAazAZ", "AZ") == 4
+   && $martian->rindex("AZAAazAZ", "ZA") == -1
+    ? "ok" : "not ok", " ", ++$loaded, "\n";
+
+$cap = String::Multibyte->new({
+         regexp => '[A-Z][a-z]*|[\x00-\xFF]',
+      });
+
+print $cap->index("", "") == 0
+   && $cap->index("", "a") == -1
+   && $cap->index("Perl", "Pe") == -1
+   && $cap->index("Perl, Per.", "Per") == 3
+   && $cap->index("OneTwoThree", "Three") == 2
+   && $cap->index("AIUEOAIUEO", "A") == 0
+   && $cap->index("PhH+Cl2->PhCl+HCl", "Cl")     ==  3
+   && $cap->index("PhH+Cl2->PhCl+HCl", "Cl",  0) ==  3
+   && $cap->index("PhH+Cl2->PhCl+HCl", "Cl",  2) ==  3
+   && $cap->index("PhH+Cl2->PhCl+HCl", "Cl",  3) ==  3
+   && $cap->index("PhH+Cl2->PhCl+HCl", "Cl",  4) ==  8
+   && $cap->index("PhH+Cl2->PhCl+HCl", "Cl",  7) ==  8
+   && $cap->index("PhH+Cl2->PhCl+HCl", "Cl",  8) ==  8
+   && $cap->index("PhH+Cl2->PhCl+HCl", "Cl",  9) == 11
+   && $cap->index("PhH+Cl2->PhCl+HCl", "Cl", 10) == 11
+   && $cap->index("PhH+Cl2->PhCl+HCl", "Cl", 11) == 11
+   && $cap->index("PhH+Cl2->PhCl+HCl", "Cl", 12) == -1
+    ? "ok" : "not ok", " ", ++$loaded, "\n";
+
+print $cap->rindex("", "") == 0
+   && $cap->rindex("", "a") == -1
+   && $cap->rindex("Perl", "Pe") == -1
+   && $cap->rindex("Perl, Per.", "Per") == 3
+   && $cap->rindex("OneTwoThree", "Three") == 2
+   && $cap->rindex("AIUEOAIUEO", "A") == 5
+   && $cap->rindex("PhH+Cl2->PhCl+HCl", "Cl")     == 11
+   && $cap->rindex("PhH+Cl2->PhCl+HCl", "Cl",  0) == -1
+   && $cap->rindex("PhH+Cl2->PhCl+HCl", "Cl",  2) == -1
+   && $cap->rindex("PhH+Cl2->PhCl+HCl", "Cl",  3) ==  3
+   && $cap->rindex("PhH+Cl2->PhCl+HCl", "Cl",  4) ==  3
+   && $cap->rindex("PhH+Cl2->PhCl+HCl", "Cl",  7) ==  3
+   && $cap->rindex("PhH+Cl2->PhCl+HCl", "Cl",  8) ==  8
+   && $cap->rindex("PhH+Cl2->PhCl+HCl", "Cl",  9) ==  8
+   && $cap->rindex("PhH+Cl2->PhCl+HCl", "Cl", 10) ==  8
+   && $cap->rindex("PhH+Cl2->PhCl+HCl", "Cl", 11) == 11
+   && $cap->rindex("PhH+Cl2->PhCl+HCl", "Cl", 12) == 11
+    ? "ok" : "not ok", " ", ++$loaded, "\n";
 
 1;
 __END__

@@ -1,7 +1,7 @@
 package String::Multibyte::Bytes;
 
 use vars qw($VERSION);
-$VERSION = 1.00;
+$VERSION = '1.01';
 
 +{
     charset  => 'bytes',

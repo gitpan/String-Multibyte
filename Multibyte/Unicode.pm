@@ -2,7 +2,7 @@ package String::Multibyte::Unicode;
 
 require 5.007; # maybe 5.008
 use vars qw($VERSION);
-$VERSION = 1.00;
+$VERSION = '1.01';
 
 +{
     charset  => 'Unicode',

@@ -1,7 +1,7 @@
 package String::Multibyte::ShiftJIS;
 
 use vars qw($VERSION);
-$VERSION = 1.00;
+$VERSION = '1.01';
 
 +{
     charset  => 'Shift_JIS',
@@ -60,7 +60,7 @@ for Shift_JIS like encodings
 C<String::Multibyte::ShiftJIS> is used for manipulation of strings
 in Shift_JIS like encodings.
 
-Character order: C<0x00..0x7E>, C<0xA1..0xDF>, C<0x8140..0x9FFC>,
+Character order: C<0x00..0x7F>, C<0xA1..0xDF>, C<0x8140..0x9FFC>,
 C<0xE040..0xFCFC>.
 
 =head1 CAVEAT

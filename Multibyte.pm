@@ -18,7 +18,7 @@ require Exporter;
 @ISA = qw(Exporter);
 @EXPORT = qw();
 
-$VERSION = '1.00';
+$VERSION = '1.01';
 
 my $PACKAGE = 'String::Multibyte'; # __PACKAGE__
 
@@ -98,6 +98,25 @@ sub strrev {
     return join '', reverse $str =~ /$re/g;
 }
 
+
+#==========
+# _check_n($re, $str, $sub, $len), internally used, non-OO
+#
+# like ($obj->substr($str, 0, $len) eq $sub);
+# $len must be equal to $obj->length($sub);
+#
+sub _check_n {
+    my($re, $str, $sub, $len) = @_;
+    my $cnt = 0;
+    my $temp = "";
+    while ($str =~ /($re)/g) {
+	last unless $cnt < $len;
+	$temp .= $1;
+	$cnt++;
+    }
+    return $sub eq $temp;
+}
+
 #==========
 # index
 #
@@ -119,10 +138,14 @@ sub index {
     }
     return -1 if $len < $pos;
     my $pat = quotemeta($sub);
+    my $sublen = $obj->length($sub);
     $str =~ s/^$re// ? $cnt++ : croak
 	while CORE::length($str) && $cnt < $pos;
-    $str =~ s/^$re// ? $cnt++ : croak
-	while CORE::length($str) && $str !~ /^$pat/;
+    while (CORE::length($str)) {
+	last
+	    if $str =~ /^$pat/ && _check_n($re, $str, $sub, $sublen);
+	$str =~ s/^$re// ? $cnt++ : croak;
+    }
     return CORE::length($str) ? $cnt : -1;
 }
 
@@ -146,9 +169,11 @@ sub rindex {
     }
     return -1 if $pos < 0;
     my $pat = quotemeta($sub);
+    my $sublen = $obj->length($sub);
     my $ret = -1;
     while ($cnt <= $pos && CORE::length($str)) {
-	$ret = $cnt if $str =~ /^$pat/;
+	$ret = $cnt
+	    if $str =~ /^$pat/ && _check_n($re, $str, $sub, $sublen);
 	$str =~ s/^$re// ? $cnt++ : croak;
     }
     return $ret;
@@ -170,7 +195,7 @@ sub strspn {
     my(%lst);
     @lst{ $lst=~ /$re/g } = ();
     while ($str =~ /($re)/g) {
-	last if ! exists $lst{$1};
+	last unless exists $lst{$1};
 	$ret++;
     }
     return $ret;
@@ -497,7 +522,7 @@ sub trclosure {
 sub strsplit {
     my $obj = shift;
     my $re  = $obj->{regexp} or croak sprintf $Msg_undef, "regexp";
-    my $pat = quotemeta shift;
+    my $sub = shift;
     my $str = shift;
     my $lim = shift || 0;
 
@@ -507,7 +532,7 @@ sub strsplit {
     if ($str eq '') {
 	return wantarray ? () : 0;
     }
-    if ($pat eq '' && $lim <= 0) {
+    if ($sub eq '' && $lim <= 0) {
 	return wantarray
 	    ? ($str =~ /$re/g, $lim < 0 ? '' : ())
 	    : ($lim < 0) + $obj->length($str);
@@ -517,10 +542,15 @@ sub strsplit {
     }
 
     my $cnt = 0;
-    my @ret = CORE::length $pat ? ('') : ();
-    if (CORE::length $pat) {
+    my @ret = CORE::length $sub ? ('') : ();
+
+    if (CORE::length $sub) {
+	my $pat = quotemeta $sub;
+	my $sublen = $obj->length($sub);
+
 	while(($lim <= 0 || $cnt < $lim) && CORE::length($str)) {
-	    if ($str =~ s/^$pat//) {
+	    if ($str =~ /^$pat/ && _check_n($re, $str, $sub, $sublen)) {
+		$str =~ s/^$pat//;
 		$cnt = push @ret, '';
 	    } else {
 		$str =~ s/^($re)// ? $ret[-1] .= $1 : croak;
@@ -576,8 +606,8 @@ but keep them not conflict among another charset.
 
 =item C<regexp>
 
-The value for the key C<'regexp'>, REQUIRED, is a regexp
-matching one character of the concerned charset.
+The value for the key C<'regexp'>, REQUIRED, is a regular expression
+that matchs a single character of the concerned charset.
 If the C<'regexp'> is omitted, calling any method is croaked.
 
 =item C<nextchar>
@@ -977,9 +1007,36 @@ C<trclosure()> internally and uses the returned closure.
 
 =back
 
-=head1 BUGS
+=head1 CAVEAT
+
+=over 4
+
+=item C<$[>
 
 This modules supposes C<$[> is always equal to 0, never 1.
+
+=item Grapheme manipulation
+
+Since v. 1.01, manipulation of sequence of graphemes is to be supported.
+
+In a grapheme-oriented manipulation, notice that
+the beginning and the end of a string are always on a grapheme boundary.
+
+E.g. imagine a grapheme set where a grapheme comprises
+either a leading latin capital letter followed by one or more
+latin small letters, or a single byte.
+Such a set can be define as below.
+
+   $gra = String::Multibyte->new({
+         regexp => qr/[A-Z][a-z]*|[\x00-\xFF]/,
+      });
+
+Think about C<$gra-E<gt>index("Perl", "Pe")>.
+As both C<"Perl"> and C<"Pe"> are a single grapheme,
+they are not equal to each other.
+So the result of this must be C<-1> (meaning B<no match>).
+
+=back
 
 =head1 AUTHOR
 

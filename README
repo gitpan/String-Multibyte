@@ -1,7 +1,7 @@
-String::Multibyte.pm version 1.00
+String::Multibyte.pm version 1.01
 ================
 
-String::Multibyte - manipulation multibyte character strings.
+String::Multibyte - manipulation of multibyte character strings
 
 SYNOPSIS
 
@@ -33,6 +33,10 @@ To install this module type the following:
    make
    make test
    make install
+
+Note: t/long.t does stress tests to cope with long strings.
+     If it takes long long time on your machine,
+     try again after removing it.
 
 COPYRIGHT AND LICENCE
 

@@ -21,6 +21,7 @@ t/length.t
 t/long.t
 t/mkrange.t
 t/sjis.t
+t/sjisgr.t
 t/split.t
 t/strrev.t
 t/substr.t

@@ -32,6 +32,8 @@ print 0 eq $mb->length("")
   &&  3 eq $mb->length("abc")
   &&  4 eq $mb->length("abc\n")
   &&  5 eq $mb->length("ｱｲｳｴｵ")
+  &&  4 eq $mb->length("ﾊﾟｰﾙ")
+  && 12 eq $mb->length("ｶﾞｷﾞｸﾞｹﾞｺﾞｳﾞ")
   && 10 eq $mb->length("あかさたなはまやらわ")
   && 14 eq $mb->length("あかさたな\n\nはまやらわ\n\n")
   &&  9 eq $mb->length('AIUEO日本漢字')
@@ -48,7 +50,7 @@ $str = 'あいうえおaiueoAIUEOｱｲｳｴｵ日本漢字';
 print $ref eq $mb->strrev($str)
   ? "ok" : "not ok", " 7\n";
 
-print $mb->strspn("XZ\0Z\0Y", "\0X\0YZ") == 6
+print $mb->strspn("XZ\0Z\0Yz", "\0X\0YZ") == 6
    && $mb->strcspn("Perlは面白い。", "XY\0r") == 2
    && $mb->strspn("+0.12345*12", "+-.0123456789") == 8
    && $mb->strcspn("Perlは面白い。", "赤青黄白黒") == 6
@@ -56,6 +58,8 @@ print $mb->strspn("XZ\0Z\0Y", "\0X\0YZ") == 6
    && $mb->strcspn("", "123") == 0
    && $mb->strspn("あいうえお", "") == 0
    && $mb->strcspn("あいうえお", "") == 5
+   && $mb->strspn("ﾊﾟﾊﾟﾊﾍﾟﾎﾟ", "ﾊﾟﾋﾟﾌﾟﾍﾟﾎﾟ") == 9
+   && $mb->strcspn("ｹｻﾉｺﾞﾊﾝﾊ", "ｶﾞｷﾞｸﾞｹﾞｺﾞ") == 0
    && $mb->strspn("", "") == 0
    && $mb->strcspn("", "") == 0
  ? "ok" : "not ok", " 8\n";

@@ -1,5 +1,9 @@
 Revision history for Perl extension String::Multibyte.
 
+1.01  Thu Nov 14 22:35:01 2002
+    - bug fix: grapheme handling for r?index() and strsplit().
+    - doc fix: The repertories for EUC, EUC_JP, ShiftJIS include 0x7F (DEL).
+
 1.00  Mon Nov 11 22:45:21 2002
     - new() can cope with a hashref (not only a module name).
     - add UTF16BE.pm and UTF16LE.pm.
