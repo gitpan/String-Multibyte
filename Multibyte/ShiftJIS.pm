@@ -1,7 +1,7 @@
 package String::Multibyte::ShiftJIS;
 
 use vars qw($VERSION);
-$VERSION = '1.01';
+$VERSION = '1.02';
 
 +{
     charset  => 'Shift_JIS',
@@ -46,7 +46,7 @@ __END__
 =head1 NAME
 
 String::Multibyte::ShiftJIS - internally used by String::Multibyte
-for Shift_JIS like encodings
+for Shift_JIS
 
 =head1 SYNOPSIS
 
@@ -58,18 +58,30 @@ for Shift_JIS like encodings
 =head1 DESCRIPTION
 
 C<String::Multibyte::ShiftJIS> is used for manipulation of strings
-in Shift_JIS like encodings.
+in Shift_JIS fimily encodings.
 
-Character order: C<0x00..0x7F>, C<0xA1..0xDF>, C<0x8140..0x9FFC>,
+Byte range of single-byte characters:
+C<0x00..0x7F> and C<0xA1..0xDF>.
+
+Leading byte range of double-byte characters:
+C<0x81..0x9F> and C<0xE0..0xFC>.
+
+Trailing byte range of double-byte characters:
+C<0x40..0x7E> and C<0x80..0xFC>.
+
+Character order (invalid code points are excluded):
+C<0x00..0x7F>, C<0xA1..0xDF>, C<0x8140..0x9FFC>,
 C<0xE040..0xFCFC>.
 
 =head1 CAVEAT
 
-C<0xF040..0xFCFC> are included. C<0x80>, C<0xA0>, and C<0xFD..0xFF> are not supported.
+C<0xF040..0xFCFC> are included.
 
-For Shift_JISX0213, the row 8 of the plane 2, C<0xF09F..0xF0FC>,
+C<0x80>, C<0xA0>, and C<0xFD..0xFF> are not supported.
+
+For Shift_JISX0213, row 8 of the plane 2, C<0xF09F..0xF0FC>,
 is simply arranged in the binary order
-(This module is not aware of the JIS order).
+(This module is not aware of the JIS X 0213 order).
 Then, row 1 (C<0xF040>) E<lt> row 8 (C<0xF09F>) E<lt> row 3 (C<0xF140>) ...
 
 =head1 SEE ALSO

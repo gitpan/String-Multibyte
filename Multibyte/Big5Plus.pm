@@ -1,12 +1,12 @@
-package String::Multibyte::EUC;
+package String::Multibyte::Big5Plus;
 
 use vars qw($VERSION);
 $VERSION = '1.02';
 
 +{
-    charset  => 'EUC',
+    charset  => 'Big-5 Plus',
 
-    regexp   => '(?:[\x00-\x7F]|[\xA1-\xFE][\xA1-\xFE])',
+    regexp   => '(?:[\x00-\x7F]|[\x81-\xFE][\x40-\x7E\x80-\xFE])',
 
     cmpchar => sub { $_[0] cmp $_[1] },
 
@@ -18,7 +18,7 @@ $VERSION = '1.02';
 	}
 	elsif ($len == 1) {
 	    return $ch eq "\x7F"
-		? "\xA1\xA1"
+		? "\x81\x40"
 		: chr(ord($ch)+1);
 	}
 	else {
@@ -26,8 +26,10 @@ $VERSION = '1.02';
 	    return $ch eq "\xFE\xFE"
 		? undef
 		: $d == 0xFE
-		    ? chr($c+1)."\xA1"
-		    : pack('CC', $c, $d+1);
+		    ? chr($c+1)."\x40"
+		    : $d == 0x7E
+			? chr($c)."\x80"
+			: pack('CC', $c, $d+1);
 	}
     },
 };
@@ -36,35 +38,32 @@ __END__
 
 =head1 NAME
 
-String::Multibyte::EUC - internally used by String::Multibyte
-for simple EUC encodings
+String::Multibyte::Big5Plus - internally used by String::Multibyte
+for Big-5 Plus
 
 =head1 SYNOPSIS
 
     use String::Multibyte;
 
-    $euc = String::Multibyte->new('EUC');
-    $euc_length = $euc->length($euc_string);
+    $big5p = String::Multibyte->new('Big5Plus');
+    $big5p_length = $big5p->length($big5p_string);
 
 =head1 DESCRIPTION
 
-C<String::Multibyte::EUC> is used for manipulation of strings in EUC
-comprising C<C0>, C<G0>, and C<G1> in which a double-byte set is invoked.
+C<String::Multibyte::Big5Plus> is used for manipulation of strings
+in Big-5 Plus.
 
 Byte range of single-byte characters:
 C<0x00..0x7F>.
 
 Leading byte range of double-byte characters:
-C<0xA1..0xFE>.
+C<0x81..0xFE>.
 
 Trailing byte range of double-byte characters:
-C<0xA1..0xFE>.
+C<0x40..0x7E> and C<0x80..0xFE>.
 
-Character order: C<0x00..0x7F>, C<0xA1A1..0xFEFE>
-
-=head1 CAVEAT
-
-C1 controls, C<0x80..0x9E>, are not supported.
+Character order (invalid code points are excluded):
+C<0x00..0x7F>, C<0x8140..0xFEFE>
 
 =head1 SEE ALSO
 

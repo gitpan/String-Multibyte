@@ -1,7 +1,7 @@
 package String::Multibyte::UTF8;
 
 use vars qw($VERSION);
-$VERSION = '1.01';
+$VERSION = '1.02';
 
 +{
     charset  => 'UTF-8',
@@ -19,9 +19,7 @@ $VERSION = '1.01';
 	'[\xF1-\xF3][\x80-\xBF][\x80-\xBF][\x80-\xBF]|' .
 	'\xF4[\x80-\x8F][\x80-\xBF][\x80-\xBF])',
 
-    cmpchar => sub {
-	length($_[0]) <=> length($_[1]) || $_[0] cmp $_[1];
-    },
+    cmpchar => sub { $_[0] cmp $_[1] },
 
     nextchar => sub {
 	my $ch = shift;
@@ -48,23 +46,23 @@ $VERSION = '1.01';
 		? "\xF0\x90\x80\x80"
 		: $ch eq "\xED\x9F\xBF"
 		    ? "\xEE\x80\x80"
-		    : $d == 0xBF && $e == 0xBF
-			? chr($c+1)."\x80\x80"
-			: $e == 0xBF
-			    ? pack('CCC', $c, $d+1, 0x80)
-			    : pack('CCC', $c, $d, $e+1);
+		    : $e == 0xBF
+			? $d == 0xBF
+			    ? chr($c+1)."\x80\x80"
+			    : pack('CCC', $c, $d+1, 0x80)
+			: pack('CCC', $c, $d, $e+1);
 	}
 	else {
 	    my($c,$d,$e,$f) = unpack('CCCC',$ch);
-	    return $ch eq "\xF4\x8F\xBF\xBF"
+	    return $ch ge "\xF4\x8F\xBF\xBF"
 		? undef
-		: $d == 0xBF && $e == 0xBF && $f == 0xBF
-		    ? chr($c+1)."\x80\x80\x80"
-		    : $e == 0xBF && $f == 0xBF
-			 ? pack('CCCC', $c, $d+1, 0x80, 0x80)
-			 : $f == 0xBF
-			     ? pack('CCCC', $c, $d, $e+1, 0x80)
-			     : pack('CCCC', $c, $d, $e, $f+1);
+		    : $f == 0xBF
+			? $e == 0xBF
+			    ? $d == 0xBF
+				? chr($c+1)."\x80\x80\x80"
+				: pack('CCCC', $c, $d+1, 0x80, 0x80)
+			    : pack('CCCC', $c, $d, $e+1, 0x80)
+			: pack('CCCC', $c, $d, $e, $f+1);
 	}
     },
 };

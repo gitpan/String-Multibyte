@@ -1,5 +1,13 @@
 Revision history for Perl extension String::Multibyte.
 
+1.02  Sun Nov 17 19:40:57 2002
+    - add Grapheme.pm for Perl 5.8.0 or later.
+    - add Big5.pm, Big5Plus.pm, EUC_TW.pm, GB18030.pm, GBK.pm, Johab.pm,
+      and UHC.pm.  They are not very familiar with me...
+      Patches, comments, and suggestions are welcome.
+    - fix: EUC_JP includes 0x8EE0..0x8EFE.
+    - some new tests.
+
 1.01  Thu Nov 14 22:35:01 2002
     - bug fix: grapheme handling for r?index() and strsplit().
     - doc fix: The repertories for EUC, EUC_JP, ShiftJIS include 0x7F (DEL).

@@ -18,7 +18,7 @@ require Exporter;
 @ISA = qw(Exporter);
 @EXPORT = qw();
 
-$VERSION = '1.01';
+$VERSION = '1.02';
 
 my $PACKAGE = 'String::Multibyte'; # __PACKAGE__
 
@@ -31,6 +31,10 @@ my $Msg_lastc  = $PACKAGE ." reach the last char before end of char range";
 
 (my $Path = $INC{'String/Multibyte.pm'}) =~ s/\.pm$//;
 
+use vars qw($hasFS);
+eval { require File::Spec; };
+$hasFS = $@ ? 0 : 1;
+
 #==========
 # new
 #
@@ -38,15 +42,20 @@ sub new {
     my $class   = shift;
     my $charset = shift;
     my $verbose = shift;
-    my $self;
+    my ($pm, $self);
     if (ref $charset) {
 	$self = { %$charset };
     } else {
-	my $pm = "$Path/$charset.pm";
+	$pm = $hasFS
+	    ? File::Spec->catfile($Path, "$charset.pm")
+	    : "$Path/$charset.pm";
 	$self = do($pm) or croak "not exist $pm";
     }
-    my $re = $self->{regexp}
+    defined $self->{regexp}
 	or croak sprintf $Msg_undef, "regexp";
+    $] < 5.005
+	or eval q{ $self->{regexp} = qr/$self->{regexp}/; };
+
     $verbose and $self->{verbose} = $verbose;
     defined $self->{charset}
 	or $self->{charset} = "$charset"; # stringified
@@ -82,6 +91,15 @@ sub length {
     }
     return 0 + $str =~ s/$re//g;
 }
+
+#==========
+# __strlen: for internal use
+#
+sub __strlen {
+    my ($re, $str) = @_;
+    return 0 + $str =~ s/$re//g;
+}
+
 
 #==========
 # strrev
@@ -130,7 +148,7 @@ sub index {
     if ($obj->{verbose} && ! $obj->islegal($str, $sub)) {
 	carp sprintf $Msg_malfo, $obj->{charset};
     }
-    my $len = $obj->length($str);
+    my $len = __strlen($re, $str);
     my $pos = @_ == 3 ? $_[2] : 0;
 
     if ($sub eq "") {
@@ -138,7 +156,7 @@ sub index {
     }
     return -1 if $len < $pos;
     my $pat = quotemeta($sub);
-    my $sublen = $obj->length($sub);
+    my $sublen = __strlen($re, $sub);
     $str =~ s/^$re// ? $cnt++ : croak
 	while CORE::length($str) && $cnt < $pos;
     while (CORE::length($str)) {
@@ -162,14 +180,14 @@ sub rindex {
     if ($obj->{verbose} && ! $obj->islegal($str, $sub)) {
 	carp sprintf $Msg_malfo, $obj->{charset};
     }
-    my $len = $obj->length($str);
+    my $len = __strlen($re, $str);
     my $pos = @_ == 3 ? $_[2] : $len;
     if ($sub eq "") {
 	return $pos <= 0 ? 0 : $len <= $pos ? $len : $pos;
     }
     return -1 if $pos < 0;
     my $pat = quotemeta($sub);
-    my $sublen = $obj->length($sub);
+    my $sublen = __strlen($re, $sub);
     my $ret = -1;
     while ($cnt <= $pos && CORE::length($str)) {
 	$ret = $cnt
@@ -239,7 +257,7 @@ sub substr {
 	carp sprintf $Msg_malfo, $obj->{charset};
     }
 
-    $slen = $obj->length($str);
+    $slen = __strlen($re, $str);
     $except = 1 if $slen < $off;
     if (@_ == 2) {
 	$len = $slen - $off;
@@ -431,7 +449,7 @@ sub trclosure {
 		my $cnt = 0;
 		my %cnt = ();
 		(ref $str ? $$str : $str) =~ s{($re)}{
-		    exists $hash{$1} ? $1 : (++$cnt, ++$cnt{$1}, '');
+		    exists $hash{$1} ? $1 : ($h ? ++$cnt{$1} : ++$cnt, '');
 		}ge;
 		return $h
 		    ? wantarray ? %cnt : \%cnt
@@ -450,7 +468,8 @@ sub trclosure {
 		(ref $str ? $$str : $str) =~ s{($re)}{
 		    exists $hash{$1}
 			? ($pre = '', $1)
-			: (++$cnt, ++$cnt{$1}, $now = @to ? $to[-1] : $1,
+			: ($h ? ++$cnt{$1} : ++$cnt,
+			   $now = @to ? $to[-1] : $1,
 			   $now eq $pre ? '' : ($pre = $now) );
 		}ge;
 		return $h
@@ -468,7 +487,7 @@ sub trclosure {
 		my $pre = '';
 		(ref $str ? $$str : $str) =~ s{($re)}{
 		    exists $hash{$1}
-			? (++$cnt, ++$cnt{$1},
+			? ($h ? ++$cnt{$1} : ++$cnt,
 			    $hash{$1} eq '' || $hash{$1} eq $pre
 				? '' : ($pre = $hash{$1}))
 			: ($pre = '', $1);
@@ -488,7 +507,7 @@ sub trclosure {
 		(ref $str ? $$str : $str) =~ s{($re)}{
 		    exists $hash{$1}
 			? $1
-			: (++$cnt, ++$cnt{$1}, @to) ? $to[-1] : $1;
+			: ($h ? ++$cnt{$1} : ++$cnt, @to) ? $to[-1] : $1;
 		}ge;
 	    return $h
 		? wantarray ? %cnt : \%cnt
@@ -504,7 +523,7 @@ sub trclosure {
 		my %cnt = ();
 		(ref $str ? $$str : $str) =~ s{($re)}{
 		    exists $hash{$1}
-			? (++$cnt, ++$cnt{$1}, $hash{$1})
+			? ($h ? ++$cnt{$1} : ++$cnt, $hash{$1})
 			: $1;
 		}ge;
 		return $h
@@ -526,7 +545,7 @@ sub strsplit {
     my $str = shift;
     my $lim = shift || 0;
 
-    if ($obj->{verbose} && ! $obj->islegal($str)) {
+    if ($obj->{verbose} && ! $obj->islegal($str, $sub)) {
 	carp sprintf $Msg_malfo, $obj->{charset};
     }
     if ($str eq '') {
@@ -546,7 +565,7 @@ sub strsplit {
 
     if (CORE::length $sub) {
 	my $pat = quotemeta $sub;
-	my $sublen = $obj->length($sub);
+	my $sublen = __strlen($re, $sub);
 
 	while(($lim <= 0 || $cnt < $lim) && CORE::length($str)) {
 	    if ($str =~ /^$pat/ && _check_n($re, $str, $sub, $sublen)) {
@@ -588,11 +607,18 @@ String::Multibyte - manipulation of multibyte character strings
 
 This module provides some functions which emulate
 the corresponding C<CORE> functions
-to manipulate multiple-byte character strings.
+for locale-independent manipulation of multiple-byte character strings.
+
+Why this module is locale-independent?
+Well, because this module only consider the byte sequence structure
+of charsets and is not aware of any Locale stuff!
+Locale-dependent methods like C<uc()>, C<lc()>, etc.,
+will not be supported at all.
 
 =head2 Definition of Multibyte Charsets
 
-The definition files are sited under the C</String/Multibyte> directory.
+The definition files are sited
+under the C<$Config{installsitelib}/String/Multibyte> directory.
 
 The definition file must return a hashref, having key(s) named as following.
 
@@ -608,14 +634,16 @@ but keep them not conflict among another charset.
 
 The value for the key C<'regexp'>, REQUIRED, is a regular expression
 that matchs a single character of the concerned charset.
-If the C<'regexp'> is omitted, calling any method is croaked.
+(You may use C<qr//> if available.)
+
+B<If the C<'regexp'> is omitted, calling any method is croaked.>
 
 =item C<nextchar>
 
 The value for the key C<'nextchar'> must be a coderef
 that returns the next character to the specified character.
-If the C<'nextchar'> coderef is omitted, C<mkrange> and C<strtr>
-functions don't understand hyphen metacharacter for character ranges.
+If the C<'nextchar'> coderef is omitted, C<mkrange()> and C<strtr()>
+methods don't understand hyphen metacharacter for character ranges.
 
 =item C<cmpchar>
 
@@ -650,7 +678,7 @@ other than C<'escape'> or C<'hyphen'>, it is parsed literally.
 =item C<$mbcs = String::Multibyte-E<gt>new(CHARSET, VERBOSE)>
 
 C<CHARSET> is the charset name; exactly speaking,
-the file name of the definition file (without the suffix C<.pm>).
+the file name of the definition file (without the suffix F<.pm>).
 It returns the instance to tell methods in which charset
 the specified strings should be handled.
 
@@ -686,6 +714,7 @@ the C<islegal> method if necessary).
 
 Returns a boolean indicating whether all the strings in arguments
 are legally encoded in the concerned charset.
+Returns false even if one element is illegal in C<LIST>.
 
 =back
 
@@ -705,7 +734,7 @@ Returns the length in characters of the specified string.
 
 =item C<$mbcs-E<gt>strrev(STRING)>
 
-Returns a reversed string.
+Returns a reversed string in characters.
 
 =back
 
@@ -722,7 +751,7 @@ of C<SUBSTR> in C<STRING> at or after C<POSITION>.
 If C<POSITION> is omitted, starts searching
 from the beginning of the string.
 
-If the substring is not found, returns -1.
+If the substring is not found, returns C<-1>.
 
 =item C<$mbcs-E<gt>rindex(STRING, SUBSTR)>
 
@@ -733,7 +762,7 @@ of C<SUBSTR> in C<STRING> at or after C<POSITION>.
 If C<POSITION> is specified, returns the last
 occurrence at or before that position.
 
-If the substring is not found, returns -1.
+If the substring is not found, returns C<-1>.
 
 =item C<$mbcs-E<gt>strspn(STRING, SEARCHLIST)>
 
@@ -744,7 +773,7 @@ any character not contained in the search list.
   # returns 8.
 
 If the specified string does not contain any character
-in the search list, returns 0.
+in the search list, returns C<0>.
 
 The string consists of characters in the search list,
 the returned value equals the length of the string.
@@ -839,10 +868,12 @@ About the character order for each charset, see its definition file.
 If the character order is undefined in the definition file,
 returns an identical string with the specified string.
 
-A character range is specified with a HYPHEN-MINUS, C<'-'>. The backslashed
-combinations C<'\-'> and C<'\\'> are used instead of the characters
-C<'-'> and C<'\'>, respectively. The hyphen at the beginning or
-end of the range is also evaluated as the hyphen itself.
+A character range is specified with a HYPHEN-MINUS, C<'-'>.
+
+The backslashed combinations C<'\-'> and C<'\\'> are used
+instead of the characters C<'-'> and C<'\'>, respectively.
+The hyphen at the beginning or the end of the range
+is also evaluated as the hyphen itself.
 
 For example, C<$mbcs-E<gt>mkrange('+\-0-9A-F')> returns
 C<('+', '-', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
@@ -971,7 +1002,7 @@ You can use whichever you like.
 
 Without C<'o'>,
 
-  foreach(@hiragana_strings){
+  foreach (@hiragana_strings) {
     print $mbcs->strtr($_, 'ぁ-ん', 'ァ-ン');
   }
 
@@ -1013,7 +1044,7 @@ C<trclosure()> internally and uses the returned closure.
 
 =item C<$[>
 
-This modules supposes C<$[> is always equal to 0, never 1.
+This modules supposes C<$[> is always equal to C<0>, never C<1>.
 
 =item Grapheme manipulation
 
@@ -1028,7 +1059,7 @@ latin small letters, or a single byte.
 Such a set can be define as below.
 
    $gra = String::Multibyte->new({
-         regexp => qr/[A-Z][a-z]*|[\x00-\xFF]/,
+         regexp => '[A-Z][a-z]*|[\x00-\xFF]',
       });
 
 Think about C<$gra-E<gt>index("Perl", "Pe")>.
