@@ -1,11 +1,18 @@
 Revision history for Perl extension String::Multibyte.
 
+1.04  Sat Apr 19 09:32:00 2003
+    - added UTF32BE.pm and UTF32LE.pm.
+      (Perl 5.003 may work wrongly with many "\x00" characters in a string)
+    - upgraded Grapheme.pm for UAX #29-4
+      * U+115A..U+115E are removed from Jamo L.
+    - doc tweak on hyphen and escape.
+
 1.03  Sun Nov 17 22:20:45 2002
     - some detypo.
 
 1.02  Sun Nov 17 19:40:57 2002
-    - add Grapheme.pm for Perl 5.8.0 or later.
-    - add Big5.pm, Big5Plus.pm, EUC_TW.pm, GB18030.pm, GBK.pm, Johab.pm,
+    - added Grapheme.pm for Perl 5.8.0 or later.
+    - added Big5.pm, Big5Plus.pm, EUC_TW.pm, GB18030.pm, GBK.pm, Johab.pm,
       and UHC.pm.  These encodings are not very familiar to me...
       Patches, comments, and suggestions are welcome.
     - fix: EUC_JP includes 0x8EE0..0x8EFE.
@@ -13,16 +20,16 @@ Revision history for Perl extension String::Multibyte.
 
 1.01  Thu Nov 14 22:35:01 2002
     - bug fix: grapheme handling for r?index() and strsplit().
-    - doc fix: The repertories for EUC, EUC_JP, ShiftJIS include 0x7F (DEL).
+    - doc fix: The repertoires for EUC, EUC_JP, ShiftJIS include 0x7F (DEL).
 
 1.00  Mon Nov 11 22:45:21 2002
     - new() can cope with a hashref (not only a module name).
-    - add UTF16BE.pm and UTF16LE.pm.
+    - added UTF16BE.pm and UTF16LE.pm.
     - Surrogate characters are excluded from the character order
       in String::Multibyte::UTF8. (Now the next to U+D7FF is U+E000.)
     - bug fix: strtr() did not carp even if 1st parameter is a reference
       to a malformed string, and VERBOSE is true.
-    - Unicode.pm revived (only for Perl 5.8.0 or later).
+    - revived Unicode.pm (only for Perl 5.8.0 or later).
       Some tests are provided for Unicode.pm.
       These tests will be skipped silently on an older Perl.
 
@@ -33,21 +40,21 @@ Revision history for Perl extension String::Multibyte.
     - improvement of internal.
 
 0.05  Wed Sep 12 23:23:14 2001
-    - remove ::Unicode.pm, that cannot pass all the test.
+    - removed Unicode.pm, that cannot pass all the test.
 
 0.04  Fri Sep 07 23:03:25 2001
     - bug fix: "" for length and r?index.
     - strtr returns a histogram if 'h' modifier is given.
-    - add ::Unicode.pm
+    - added Unicode.pm
       that counts upon the core unicode support.
       (maybe works only on Perl 5.7 or later)
 
 0.03  Sat Jun 16 10:40:21 2001
-    - remove ^M characters from all the files.
+    - removed ^M characters from all the files.
 
 0.02  Wed Jun 13 05:30:46 2001
     - rename Ascii.pm to Bytes.pm
-    - add strsplit
+    - added strsplit
 
 0.01  Thu Jun  7 22:36:59 2001
     - original version; created by h2xs 1.19

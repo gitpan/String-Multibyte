@@ -89,7 +89,7 @@ Character order: C<U+00..U+D7FF>, C<U+E000..U+10FFFF>.
 
 =head1 CAVEAT
 
-Surrogate characters C<U+D800..U+DFFF> are excluded in the repertory.
+Surrogate characters C<U+D800..U+DFFF> are excluded.
 
 =head1 SEE ALSO
 

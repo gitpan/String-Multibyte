@@ -1,5 +1,5 @@
 
-BEGIN { $| = 1; print "1..10\n"; }
+BEGIN { $| = 1; print "1..12\n"; }
 END {print "not ok 1\n" unless $loaded;}
 use String::Multibyte;
 $^W = 1;
@@ -8,20 +8,27 @@ print "ok 1\n";
 
 sub asc2str ($$) {
    my($cs, $str) = @_;
-   $str =~ s/([\x00-\xFF])/\x00$1/g if $cs eq 'UTF16BE';
-   $str =~ s/([\x00-\xFF])/$1\x00/g if $cs eq 'UTF16LE';
+   my $tmp =  {
+      UTF16LE => 'v',   UTF32LE => 'V',
+      UTF16BE => 'n',   UTF32BE => 'N',
+   }->{$cs};
+   $tmp and $str =~ s/([\x00-\xFF])/pack $tmp, ord $1/ge;
    return $str;
 }
 sub str2asc ($$) {
    my($cs, $str) = @_;
-   $str =~ s/\x00([\x00-\xFF])/$1/g if $cs eq 'UTF16BE';
-   $str =~ s/([\x00-\xFF])\x00/$1/g if $cs eq 'UTF16LE';
+   my $re = {
+      UTF16LE => '([\0-\xFF])\0',  UTF32LE => '([\0-\xFF])\0\0\0',
+      UTF16BE => '\0([\0-\xFF])',  UTF32BE => '\0\0\0([\0-\xFF])',
+   }->{$cs};
+   $re and $str =~ s/$re/$1/g;
    return $str;
 }
 
 #####
 
-for $cs (qw/Bytes EUC EUC_JP ShiftJIS UTF8 UTF16BE UTF16LE Unicode/) {
+for $cs (qw/Bytes EUC EUC_JP ShiftJIS
+	UTF8 UTF16BE UTF16LE UTF32BE UTF32LE Unicode/) {
     print("ok ", ++$loaded, "\n"), next
 	if $cs eq 'Unicode' && $] < 5.008;
     $mb = String::Multibyte->new($cs,1);
@@ -47,7 +54,7 @@ $martian  = String::Multibyte->new({
 print 2 == keys %hash
   && $hash{FG} == 1
   && $hash{a} == 3
-  ? "ok" : "not ok", " 10\n";
+  ? "ok" : "not ok", " ", ++$loaded, "\n";
 
 1;
 __END__

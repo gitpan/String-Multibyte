@@ -18,6 +18,8 @@ $uhc   = String::Multibyte->new('UHC',1);
 $utf8  = String::Multibyte->new('UTF8',1);
 $u16be = String::Multibyte->new('UTF16BE',1);
 $u16le = String::Multibyte->new('UTF16LE',1);
+$u32be = String::Multibyte->new('UTF32BE',1);
+$u32le = String::Multibyte->new('UTF32LE',1);
 
 $^W = 1;
 $loaded = 1;
@@ -38,6 +40,8 @@ print $big5 ->islegal("")
    && $utf8 ->islegal("")
    && $u16be->islegal("")
    && $u16le->islegal("")
+   && $u32be->islegal("")
+   && $u32le->islegal("")
    && $uhc  ->islegal("")
   ? "ok" : "not ok", " 2\n";
 
@@ -55,6 +59,8 @@ print $big5 ->islegal("\x00\x00")
    && $utf8 ->islegal("\x00\x00")
    && $u16be->islegal("\x00\x00")
    && $u16le->islegal("\x00\x00")
+   && !$u32be->islegal("\x00\x00")
+   && !$u32le->islegal("\x00\x00")
    && $uhc  ->islegal("\x00\x00")
   ? "ok" : "not ok", " 3\n";
 
@@ -84,6 +90,10 @@ print   $big5 ->islegal("\x00\x00\x00")
    &&   $utf8 ->islegal("\x00\x00\x00")
    && ! $u16be->islegal("\x00\x00\x00")
    && ! $u16le->islegal("\x00\x00\x00")
+   && ! $u32be->islegal("\x00\x00\x00")
+   && ! $u32le->islegal("\x00\x00\x00")
+   &&   $u32be->islegal("\x00\x00\x00\x00")
+   &&   $u32le->islegal("\x00\x00\x00\x00")
    &&   $uhc  ->islegal("\x00\x00")
   ? "ok" : "not ok", " 5\n";
 

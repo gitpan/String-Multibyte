@@ -58,7 +58,7 @@ for Shift_JIS
 =head1 DESCRIPTION
 
 C<String::Multibyte::ShiftJIS> is used for manipulation of strings
-in Shift_JIS fimily encodings.
+in Shift_JIS family encodings.
 
 Byte range of single-byte characters:
 C<0x00..0x7F> and C<0xA1..0xDF>.

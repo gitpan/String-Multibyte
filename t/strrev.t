@@ -1,5 +1,5 @@
 
-BEGIN { $| = 1; print "1..7\n"; }
+BEGIN { $| = 1; print "1..8\n"; }
 END {print "not ok 1\n" unless $loaded;}
 
 use String::Multibyte;
@@ -11,6 +11,8 @@ $sjis  = String::Multibyte->new('ShiftJIS',1);
 $utf8  = String::Multibyte->new('UTF8',1);
 $u16be = String::Multibyte->new('UTF16BE',1);
 $u16le = String::Multibyte->new('UTF16LE',1);
+$u32be = String::Multibyte->new('UTF32BE',1);
+$u32le = String::Multibyte->new('UTF32LE',1);
 
 $^W = 1;
 $loaded = 1;
@@ -25,6 +27,8 @@ print $bytes->strrev("") eq ""
    && $utf8 ->strrev("") eq ""
    && $u16be->strrev("") eq ""
    && $u16le->strrev("") eq ""
+   && $u32be->strrev("") eq ""
+   && $u32le->strrev("") eq ""
   ? "ok" : "not ok", " 2\n";
 
 print $bytes ->strrev("\x00\x00") eq "\x00\x00"
@@ -72,6 +76,16 @@ print $utf8 ->strrev("\xC2\xA0\xEF\xBD\xBF\x60")
 	eq "\xE8\xAA\x9E\xE6\x9C\xAC\xE6\x97\xA5"
     ? "ok" : "not ok", " 6\n";
 
+print $u32be->strrev("\0\0\x30\x42\x00\x01\xFF\xFE\0\0\x00\x41")
+	eq "\0\0\x00\x41\x00\x01\xFF\xFE\0\0\x30\x42"
+   && $u32le->strrev("\x42\x30\0\0\xFE\xFF\x01\x00\x41\x00\0\0")
+	eq "\x41\x00\0\0\xFE\xFF\x01\x00\x42\x30\0\0"
+   && $u32be->strrev("\0\0\x30\x00\x00\x01\x00\x00\0\0\x00\x41")
+	eq "\0\0\x00\x41\x00\x01\x00\x00\0\0\x30\x00"
+   && $u32le->strrev("\x00\x30\0\0\x00\x00\x01\x00\x41\x00\0\0")
+	eq "\x41\x00\0\0\x00\x00\x01\x00\x00\x30\0\0"
+    ? "ok" : "not ok", " 7\n";
+
 # see perlfaq6
 $martian  = String::Multibyte->new({
 	charset => "martian",
@@ -84,7 +98,7 @@ print $martian->strrev("AAxBGy") eq "yBGxAA"
    && $martian->strrev("zXZq") eq "qXZz"
    && $martian->strrev("ZZZZ") eq "ZZZZ"
    && $martian->strrev("zzz") eq "zzz"
-  ? "ok" : "not ok", " 7\n";
+  ? "ok" : "not ok", " 8\n";
 
 1;
 __END__

@@ -1,5 +1,5 @@
 
-BEGIN { $| = 1; print "1..65\n"; }
+BEGIN { $| = 1; print "1..81\n"; }
 END {print "not ok 1\n" unless $loaded;}
 use String::Multibyte;
 $^W = 1;
@@ -35,14 +35,30 @@ print "ok 1\n";
 	lH => "a-z", lZ => "\xEF\xBD\x81-\xEF\xBD\x9A",
     },
     UTF16BE => {
-	dH => "\c@0\0-\c@9", dZ => "\xFF\x10\x00\x2D\xFF\x19",
-	uH => "\c@A\0-\c@Z", uZ => "\xFF\x21\x00\x2D\xFF\x3A",
-	lH => "\c@a\0-\c@z", lZ => "\xFF\x41\x00\x2D\xFF\x5A",
+	dH => "\0\x30\0-\0\x39", dZ => "\xFF\x10\x00\x2D\xFF\x19",
+	uH => "\0\x41\0-\0\x5A", uZ => "\xFF\x21\x00\x2D\xFF\x3A",
+	lH => "\0\x61\0-\0\x7A", lZ => "\xFF\x41\x00\x2D\xFF\x5A",
     },
     UTF16LE => {
-	dH => "0\0-\c@9\0", dZ => "\x10\xFF\x2D\x00\x19\xFF",
-	uH => "A\0-\c@Z\0", uZ => "\x21\xFF\x2D\x00\x3A\xFF",
-	lH => "a\0-\c@z\0", lZ => "\x41\xFF\x2D\x00\x5A\xFF",
+	dH => "\x30\0-\0\x39\0", dZ => "\x10\xFF\x2D\x00\x19\xFF",
+	uH => "\x41\0-\0\x5A\0", uZ => "\x21\xFF\x2D\x00\x3A\xFF",
+	lH => "\x61\0-\0\x7A\0", lZ => "\x41\xFF\x2D\x00\x5A\xFF",
+    },
+    UTF32BE => {
+	dH => "\0\0\0\x30\0\0\0-\0\0\0\x39",
+	dZ => "\0\0\xFF\x10\0\0\x00\x2D\0\0\xFF\x19",
+	uH => "\0\0\0\x41\0\0\0-\0\0\0\x5A",
+	uZ => "\0\0\xFF\x21\0\0\x00\x2D\0\0\xFF\x3A",
+	lH => "\0\0\0\x61\0\0\0-\0\0\0\x7A",
+	lZ => "\0\0\xFF\x41\0\0\x00\x2D\0\0\xFF\x5A",
+    },
+    UTF32LE => {
+	dH => "\x30\0\0\0-\0\0\0\x39\0\0\0",
+	dZ => "\x10\xFF\0\0\x2D\x00\0\0\x19\xFF\0\0",
+	uH => "\x41\0\0\0-\0\0\0\x5A\0\0\0",
+	uZ => "\x21\xFF\0\0\x2D\x00\0\0\x3A\xFF\0\0",
+	lH => "\x61\0\0\0-\0\0\0\x7A\0\0\0",
+	lZ => "\x41\xFF\0\0\x2D\x00\0\0\x5A\xFF\0\0",
     },
     Unicode => $] < 5.008 ? {}  : {
 	dH => "0-9", dZ => pack('U*', 0xFF10, 0x2D, 0xFF19),
@@ -53,7 +69,8 @@ print "ok 1\n";
 
 #####
 
-for $cs (qw/Bytes EUC EUC_JP ShiftJIS UTF8 UTF16BE UTF16LE Unicode/) {
+for $cs (qw/Bytes EUC EUC_JP ShiftJIS
+	UTF8 UTF16BE UTF16LE UTF32BE UTF32LE Unicode/) {
     if ($cs eq 'Unicode' && $] < 5.008) {
 	for (1..8) { print("ok ", ++$loaded, "\n"); }
 	next;
@@ -68,8 +85,8 @@ for $cs (qw/Bytes EUC EUC_JP ShiftJIS UTF8 UTF16BE UTF16LE Unicode/) {
     my $lowerZ = $mb->mkrange($ran{$cs}{lZ});
     my $alphaH = $mb->mkrange($ran{$cs}{uH}.$ran{$cs}{lH});
     my $alphaZ = $mb->mkrange($ran{$cs}{uZ}.$ran{$cs}{lZ});
-    my $alnumH = $mb->mkrange($ran{$cs}{dH}.$ran{$cs}{uH}.$ran{$cs}{lH});
-    my $alnumZ = $mb->mkrange($ran{$cs}{dZ}.$ran{$cs}{uZ}.$ran{$cs}{lZ});
+    my $alnumH = $mb->mkrange(join '', @{ $ran{$cs} }{qw/dH uH lH/});
+    my $alnumZ = $mb->mkrange(join '', @{ $ran{$cs} }{qw/dZ uZ lZ/});
 
     my $digitZ2H = $mb->trclosure($digitZ, $digitH);
     my $upperZ2H = $mb->trclosure($upperZ, $upperH);
@@ -86,61 +103,63 @@ for $cs (qw/Bytes EUC EUC_JP ShiftJIS UTF8 UTF16BE UTF16LE Unicode/) {
     my($H, $Z, $tr, $NG);
     $NG = 0;
     for $H ($digitH, $lowerH, $upperH) {
-	for $tr ($digitZ2H, $upperZ2H, $lowerZ2H, $alphaZ2H, $alnumZ2H) {
+	for $tr ($digitZ2H, $upperZ2H,
+		 $lowerZ2H, $alphaZ2H, $alnumZ2H) {
 	    ++$NG unless $H eq &$tr($H);
 	}
     }
-    print ! $NG ? "ok" : "not ok", " ", ++$loaded, "\n"; 
+    print ! $NG ? "ok" : "not ok", " ", ++$loaded, "\n";
 
     $NG = 0;
     for $Z ($digitZ, $lowerZ, $upperZ) {
-	for $tr ($digitH2Z, $upperH2Z, $lowerH2Z, $alphaH2Z, $alnumH2Z){
+	for $tr ($digitH2Z, $upperH2Z,
+		 $lowerH2Z, $alphaH2Z, $alnumH2Z) {
 	    ++$NG unless $Z eq &$tr($Z);
 	}
     }
-    print ! $NG ? "ok" : "not ok", " ", ++$loaded, "\n"; 
+    print ! $NG ? "ok" : "not ok", " ", ++$loaded, "\n";
 
     print  $digitZ eq &$digitH2Z($digitH)
 	&& $digitH eq &$upperH2Z($digitH)
 	&& $digitH eq &$lowerH2Z($digitH)
 	&& $digitH eq &$alphaH2Z($digitH)
 	&& $digitZ eq &$alnumH2Z($digitH)
-	  ? "ok" : "not ok", " ", ++$loaded, "\n"; 
+	  ? "ok" : "not ok", " ", ++$loaded, "\n";
 
     print  $upperH eq &$digitH2Z($upperH)
 	&& $upperZ eq &$upperH2Z($upperH)
 	&& $upperH eq &$lowerH2Z($upperH)
 	&& $upperZ eq &$alphaH2Z($upperH)
 	&& $upperZ eq &$alnumH2Z($upperH)
-	  ? "ok" : "not ok", " ", ++$loaded, "\n"; 
+	  ? "ok" : "not ok", " ", ++$loaded, "\n";
 
     print  $lowerH eq &$digitH2Z($lowerH)
 	&& $lowerH eq &$upperH2Z($lowerH)
 	&& $lowerZ eq &$lowerH2Z($lowerH)
 	&& $lowerZ eq &$alphaH2Z($lowerH)
 	&& $lowerZ eq &$alnumH2Z($lowerH)
-	  ? "ok" : "not ok", " ", ++$loaded, "\n"; 
+	  ? "ok" : "not ok", " ", ++$loaded, "\n";
 
     print  $digitH eq &$digitZ2H($digitZ)
 	&& $digitZ eq &$upperZ2H($digitZ)
 	&& $digitZ eq &$lowerZ2H($digitZ)
 	&& $digitZ eq &$alphaZ2H($digitZ)
 	&& $digitH eq &$alnumZ2H($digitZ)
-	  ? "ok" : "not ok", " ", ++$loaded, "\n"; 
+	  ? "ok" : "not ok", " ", ++$loaded, "\n";
 
     print  $upperZ eq &$digitZ2H($upperZ)
 	&& $upperH eq &$upperZ2H($upperZ)
 	&& $upperZ eq &$lowerZ2H($upperZ)
 	&& $upperH eq &$alphaZ2H($upperZ)
 	&& $upperH eq &$alnumZ2H($upperZ)
-	  ? "ok" : "not ok", " ", ++$loaded, "\n"; 
+	  ? "ok" : "not ok", " ", ++$loaded, "\n";
 
     print  $lowerZ eq &$digitZ2H($lowerZ)
 	&& $lowerZ eq &$upperZ2H($lowerZ)
 	&& $lowerH eq &$lowerZ2H($lowerZ)
 	&& $lowerH eq &$alphaZ2H($lowerZ)
 	&& $lowerH eq &$alnumZ2H($lowerZ)
-	  ? "ok" : "not ok", " ", ++$loaded, "\n"; 
+	  ? "ok" : "not ok", " ", ++$loaded, "\n";
 }
 
 1;

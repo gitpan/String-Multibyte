@@ -11,6 +11,8 @@ $sjis  = String::Multibyte->new('ShiftJIS',1);
 $utf8  = String::Multibyte->new('UTF8',1);
 $u16be = String::Multibyte->new('UTF16BE',1);
 $u16le = String::Multibyte->new('UTF16LE',1);
+$u32be = String::Multibyte->new('UTF32BE',1);
+$u32le = String::Multibyte->new('UTF32LE',1);
 
 $^W = 1;
 $loaded = 1;
@@ -25,6 +27,8 @@ print $bytes->length("") == 0
    && $utf8 ->length("") == 0
    && $u16be->length("") == 0
    && $u16le->length("") == 0
+   && $u32be->length("") == 0
+   && $u32le->length("") == 0
   ? "ok" : "not ok", " 2\n";
 
 print $bytes->length("\x00\x00") == 2
@@ -34,6 +38,10 @@ print $bytes->length("\x00\x00") == 2
    && $utf8 ->length("\x00\x00") == 2
    && $u16be->length("\x00\x00") == 1
    && $u16le->length("\x00\x00") == 1
+   && $u16be->length("\x00\x00\x00\x00") == 2
+   && $u16le->length("\x00\x00\x00\x00") == 2
+   && $u32be->length("\x00\x00\x00\x00") == 1
+   && $u32le->length("\x00\x00\x00\x00") == 1
   ? "ok" : "not ok", " 3\n";
 
 print $sjis ->length("\x81\x40\xAD\x40") == 3
@@ -66,16 +74,20 @@ if ($] < 5.008) {
 
     print 0 == $uni->length("")
       &&  3 == $uni->length("abc")
-      &&  5 == $uni->length(pack 'U*', 0xFF71,0xFF72,0xFF73,0xFF74,0xFF75)
+      &&  5 == $uni->length(pack 'U*',
+	0xFF71,0xFF72,0xFF73,0xFF74,0xFF75)
       &&  4 == $uni->length(pack 'U*', 0x3042,0x304B,0x3055,0x305F)
-      &&  9 == $uni->length('AIUEO'.pack 'U*', 0x65E5, 0x672C,0x6F22,0x5B57)
+      &&  9 == $uni->length('AIUEO'.
+	pack 'U*', 0x65E5, 0x672C,0x6F22,0x5B57)
       ? "ok" : "not ok", " 7\n";
 
     print 0 == $bytes->length("")
       &&  3 == $bytes->length("abc")
-      && 15 == $bytes->length(pack 'U*', 0xFF71,0xFF72,0xFF73,0xFF74,0xFF75)
+      && 15 == $bytes->length(pack 'U*',
+	0xFF71,0xFF72,0xFF73,0xFF74,0xFF75)
       && 12 == $bytes->length(pack 'U*', 0x3042,0x304B,0x3055,0x305F)
-      && 17 == $bytes->length('AIUEO'.pack 'U*', 0x65E5, 0x672C,0x6F22,0x5B57)
+      && 17 == $bytes->length('AIUEO'.
+	pack 'U*', 0x65E5, 0x672C,0x6F22,0x5B57)
       ? "ok" : "not ok", " 8\n";
 }
 

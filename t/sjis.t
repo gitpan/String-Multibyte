@@ -1,5 +1,5 @@
 
-BEGIN { $| = 1; print "1..11\n"; }
+BEGIN { $| = 1; print "1..12\n"; }
 END {print "not ok 1\n" unless $loaded;}
 use String::Multibyte;
 $^W = 1;
@@ -88,6 +88,19 @@ $restr2 = &$digit_tr($frstr2);
 
 print $tostr1 eq $restr1 && $tostr2 eq $restr2
     ? "ok" : "not ok", " 11\n";
+
+$str = "\x00\x00\x30\x00\x00\x42\x00\x00\x30\x00\x42\x00";
+print $] < 5.004 || 1
+    && $mb->index($str, "\x00\x30\x00\x42\x00") == 7
+    && $mb->index($str, "\x00\x30\x00\x00\x00") == -1
+    && $mb->index($str, "\x00\x00\x30\x00") == 0
+    && $mb->index($str, "\x00\x30\x00") == 1
+    && $mb->rindex($str, "\x00\x30\x00\x42\x00") == 7
+    && $mb->rindex($str, "\x00\x30\x00\x00\x00") == -1
+    && $mb->rindex($str, "\x00\x00\x30\x00") == 6
+    && $mb->rindex($str, "\x00\x30\x00") == 7
+    ? "ok" : "not ok", " 12\n";
+
 
 1;
 __END__

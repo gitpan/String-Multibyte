@@ -1,5 +1,5 @@
 
-BEGIN { $| = 1; print "1..37\n"; }
+BEGIN { $| = 1; print "1..45\n"; }
 END {print "not ok 1\n" unless $loaded;}
 use String::Multibyte;
 $^W = 1;
@@ -8,20 +8,27 @@ print "ok 1\n";
 
 sub asc2str ($$) {
    my($cs, $str) = @_;
-   $str =~ s/([\x00-\xFF])/\x00$1/g if $cs eq 'UTF16BE';
-   $str =~ s/([\x00-\xFF])/$1\x00/g if $cs eq 'UTF16LE';
+   my $tmp =  {
+      UTF16LE => 'v',   UTF32LE => 'V',
+      UTF16BE => 'n',   UTF32BE => 'N',
+   }->{$cs};
+   $tmp and $str =~ s/([\x00-\xFF])/pack $tmp, ord $1/ge;
    return $str;
 }
 sub str2asc ($$) {
    my($cs, $str) = @_;
-   $str =~ s/\x00([\x00-\xFF])/$1/g if $cs eq 'UTF16BE';
-   $str =~ s/([\x00-\xFF])\x00/$1/g if $cs eq 'UTF16LE';
+   my $re = {
+      UTF16LE => '([\0-\xFF])\0',  UTF32LE => '([\0-\xFF])\0\0\0',
+      UTF16BE => '\0([\0-\xFF])',  UTF32BE => '\0\0\0([\0-\xFF])',
+   }->{$cs};
+   $re and $str =~ s/$re/$1/g;
    return $str;
 }
 
 #####
 
-for $cs (qw/Bytes EUC EUC_JP ShiftJIS UTF8 UTF16BE UTF16LE Unicode/) {
+for $cs (qw/Bytes EUC EUC_JP ShiftJIS
+	UTF8 UTF16BE UTF16LE UTF32BE UTF32LE Unicode/) {
     if ($cs eq 'Unicode' && $] < 5.008) {
 	print("ok ", ++$loaded, "\n");
 	next;
@@ -58,7 +65,8 @@ for $cs (qw/Bytes EUC EUC_JP ShiftJIS UTF8 UTF16BE UTF16LE Unicode/) {
     print $NG == 0 ? "ok" : "not ok", " ", ++$loaded, "\n";
 }
 
-for $cs (qw/Bytes EUC EUC_JP ShiftJIS UTF8 UTF16BE UTF16LE Unicode/) {
+for $cs (qw/Bytes EUC EUC_JP ShiftJIS
+	UTF8 UTF16BE UTF16LE UTF32BE UTF32LE Unicode/) {
     if ($cs eq 'Unicode' && $] < 5.008) {
 	print("ok ", ++$loaded, "\n");
 	next;
@@ -105,6 +113,8 @@ for $cs (qw/Bytes EUC EUC_JP ShiftJIS UTF8 UTF16BE UTF16LE Unicode/) {
     UTF8 => pack('H*', 'efbc8befbc90efbc8eefbc91efbc9233efbc91efbc94efbc92efbc95efbc91efbc92362defbc8aefbc91efbc92efbc9334efbc96'),
     UTF16BE => pack('n*', @src_char),
     UTF16LE => pack('v*', @src_char),
+    UTF32BE => pack('N*', @src_char),
+    UTF32LE => pack('V*', @src_char),
     Unicode => $] < 5.008 ? '' : pack('U*', @src_char),
 );
 %sub = (
@@ -115,10 +125,13 @@ for $cs (qw/Bytes EUC EUC_JP ShiftJIS UTF8 UTF16BE UTF16LE Unicode/) {
     UTF8 => "\xef\xbc\x91\xef\xbc\x92",
     UTF16BE => pack('n*', 0xff11, 0xff12),
     UTF16LE => pack('v*', 0xff11, 0xff12),
+    UTF32BE => pack('N*', 0xff11, 0xff12),
+    UTF32LE => pack('V*', 0xff11, 0xff12),
     Unicode => $] < 5.008 ? '' : pack('U*', 0xff11, 0xff12),
 );
 
-for $cs (qw/Bytes EUC EUC_JP ShiftJIS UTF8 UTF16BE UTF16LE Unicode/) {
+for $cs (qw/Bytes EUC EUC_JP ShiftJIS
+	UTF8 UTF16BE UTF16LE UTF32BE UTF32LE Unicode/) {
     if ($cs eq 'Unicode' && $] < 5.008) {
 	print("ok ", ++$loaded, "\n");
 	print("ok ", ++$loaded, "\n");

@@ -1,6 +1,6 @@
 #!perl
 
-BEGIN { $| = 1; print "1..29\n"; }
+BEGIN { $| = 1; print "1..33\n"; }
 END {print "not ok 1\n" unless $loaded;}
 use String::Multibyte;
 $^W = 1;
@@ -40,6 +40,10 @@ my $time = time;
 	"last" => "\xDB\xFF\xDF\xFF", count => 0x110000 - 0x800 },
     UTF16LE => {
 	"last" => "\xFF\xDB\xFF\xDF", count => 0x110000 - 0x800 },
+    UTF32BE => {
+	"last" => "\x00\x10\xFF\xFF", count => 0x110000 - 0x800 },
+    UTF32LE => {
+	"last" => "\xFF\xFF\x10\x00", count => 0x110000 - 0x800 },
     UTF8     => {
 	"last" => "\xF4\x8F\xBF\xBF", count => 0x110000 - 0x800 },
 );
@@ -50,7 +54,10 @@ for $name (sort keys %MBCS) {
     my $count = $MBCS{$name}{count};
     my $c = 0;
     my $NG = 0;
-    my $ch = $name =~ /UTF16/ ? "\x00\x00" : "\x00";
+    my $ch =
+	$name =~ /UTF32/ ? "\x00\x00\x00\x00" :
+	$name =~ /UTF16/ ? "\x00\x00" : "\x00";
+
     use vars qw($re);
     $] < 5.005
 	? $re = '^'.$mb->{regexp}.'(?!\n)$'

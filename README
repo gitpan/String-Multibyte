@@ -1,4 +1,4 @@
-String::Multibyte.pm version 1.03
+String::Multibyte.pm version 1.04
 ================
 
 String::Multibyte - locale-independent manipulation
@@ -21,12 +21,14 @@ in which charset the specified strings should be handled.
 
 PREREQUISITES AND INSTALLATION
 
-Perl 5.003 or later.
+ Perl 5.003 or later
+(Perl 5.005 or later Recommended)
 
-Exception:
-    String::Multibyte::Unicode is for Perl 5.8.0 or later.
-    Some tests provided for String::Multibyte will be skipped
-    silently on an older Perl.
+* The following modules taking advantage of the Unicode Support
+(see <perlunicode>) are required Perl 5.8.0 or later.
+
+    String::Multibyte::Grapheme
+    String::Multibyte::Unicode
 
 To install this module type the following:
 
@@ -49,7 +51,7 @@ POD
 
 COPYRIGHT AND LICENCE
 
-Copyright(C) 2001-2002, SADAHIRO Tomoyuki. Japan. All rights reserved.
+Copyright(C) 2001-2003, SADAHIRO Tomoyuki. Japan. All rights reserved.
 
 This program is free software; you can redistribute it and/or 
 modify it under the same terms as Perl itself.

@@ -18,6 +18,8 @@ Multibyte/UHC.pm
 Multibyte/Unicode.pm
 Multibyte/UTF16BE.pm
 Multibyte/UTF16LE.pm
+Multibyte/UTF32BE.pm
+Multibyte/UTF32LE.pm
 Multibyte/UTF8.pm
 t/bytes.t
 t/capture.t

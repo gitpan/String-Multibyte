@@ -18,7 +18,7 @@ require Exporter;
 @ISA = qw(Exporter);
 @EXPORT = qw();
 
-$VERSION = '1.03';
+$VERSION = '1.04';
 
 my $PACKAGE = 'String::Multibyte'; # __PACKAGE__
 
@@ -249,7 +249,9 @@ sub substr {
     my $re  = $obj->{regexp}
 	or croak sprintf $Msg_undef, "regexp";
     my(@chars, $slen, $ini, $fin, $except);
-    my($arg, $off, $len) = @_;
+    my $arg = $_[0];
+    my $off = $_[1];
+    my $len = $_[2];
     my $rep = @_ > 3 ? $_[3] : '';
 
     my $str = ref $arg ? $$arg : $arg;
@@ -292,13 +294,15 @@ sub substr {
 	}
 	$cnt++;
     }
+    my $temp = ref $arg
+	? \ CORE::substr($$arg, $plen, $clen)
+	:   CORE::substr($str,  $plen, $clen);
+
     if (@_ > 3) {
 	$_[0] = CORE::substr($str, 0,      $plen) .$rep.
 	        CORE::substr($str, $plen + $clen);
     }
-    return ref $arg
-	? \ CORE::substr($$arg, $plen, $clen)
-	:   CORE::substr($str,  $plen, $clen);
+    return $temp;
 }
 
 #==========
@@ -558,27 +562,35 @@ sub strsplit {
 	    : ($lim < 0) + $obj->length($str);
     }
     if ($lim == 1) {
-	return wantarray ? ($str) : 1 ;
+	return wantarray ? ($str) : 1;
     }
 
     my $cnt = 0;
-    my @ret = CORE::length $sub ? ('') : ();
+    my @ret = CORE::length($sub) ? ('') : ();
 
-    if (CORE::length $sub) {
+    if (CORE::length($sub)) {
 	my $pat = quotemeta $sub;
 	my $sublen = __strlen($re, $sub);
 
 	while(($lim <= 0 || $cnt < $lim) && CORE::length($str)) {
 	    if ($str =~ /^$pat/ && _check_n($re, $str, $sub, $sublen)) {
-		$str =~ s/^$pat//;
+		$str =~ s/^$pat//
+		    or croak sprintf($Msg_panic, "strsplit"),
+			unpack('H*', CORE::length($str) > 15
+			    ? CORE::substr($str, 0, 15) : $str);
 		$cnt = push @ret, '';
+	    } elsif ($str =~ s/^($re)//) {
+		$ret[-1] .= $1;
 	    } else {
-		$str =~ s/^($re)// ? $ret[-1] .= $1 : croak;
+		croak sprintf($Msg_panic, "strsplit").
+		    unpack('H*', CORE::length($str) > 10
+			? CORE::substr($str, 0, 10) : $str);
 	    }
 	}
     } else {
 	while ($cnt < $lim && CORE::length($str)) {
-	    $str =~ s/^($re)// or croak;
+	    $str =~ s/^($re)//
+		or croak sprintf $Msg_panic, "strsplit ''";
 	    $cnt = push @ret, $1;
 	}
     }
@@ -858,7 +870,7 @@ into characters.
 
 =over 4
 
-=item C<$mbcs-E<gt>mkrange(EXPR, EXPR)>
+=item C<$mbcs-E<gt>mkrange(CHARLIST, ALLOW_REVERSE)>
 
 Returns the character list (not in list context, as a concatenated string)
 gained by parsing the specified character range.
@@ -869,9 +881,12 @@ About the character order for each charset, see its definition file.
 If the character order is undefined in the definition file,
 returns an identical string with the specified string.
 
-A character range is specified with a HYPHEN-MINUS, C<'-'>.
+A character range is specified with a hyphen (C<'-'>, but exactly
+speaking, C<$obj-E<gt>{hyphen}>).
 
-The backslashed combinations C<'\-'> and C<'\\'> are used
+The backslashed combinations C<'\-'> and C<'\\'>
+(exactly speaking, C<"$obj-E<gt>{escape}$obj-E<gt>{hyphen}">
+and C<"$obj-E<gt>{escape}$obj-E<gt>{escape}">) are used
 instead of the characters C<'-'> and C<'\'>, respectively.
 The hyphen at the beginning or the end of the range
 is also evaluated as the hyphen itself.
@@ -1077,7 +1092,7 @@ SADAHIRO, Tomoyuki
     SADAHIRO@cpan.org
     http://homepage1.nifty.com/nomenclator/perl/
 
-    Copyright(C) 2001-2002; Tomoyuki, SADAHIRO. Japan. All rights reserved.
+    Copyright(C) 2001-2003; Tomoyuki, SADAHIRO. Japan. All rights reserved.
 
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.
