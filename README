@@ -1,4 +1,4 @@
-String::Multibyte.pm version 0.05
+String::Multibyte.pm version 0.06
 ================
 
 String::Multibyte - Perl module to manipulate multibyte character strings.
@@ -26,6 +26,12 @@ To install this module type the following:
    make
    make test
    make install
+
+PREREQUISITES
+
+Perl 5.003 or later.
+
+Carp, Exporter, strict, vars.
 
 COPYRIGHT AND LICENCE
 

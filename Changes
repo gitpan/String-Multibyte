@@ -1,5 +1,8 @@
 Revision history for Perl extension String::Multibyte.
 
+0.06  Sat Oct 06 15:28:08 2001
+    - improvement of internal.
+
 0.05  Wed Sep 12 23:23:14 2001
     - remove ::Unicode.pm, that cannot pass all the test.
 

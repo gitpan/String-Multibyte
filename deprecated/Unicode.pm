@@ -3,7 +3,7 @@ package String::Multibyte::Unicode;
 #  Unicode
 #
 
-require 5.006;
+require 5.006; # maybe 5.007
 
 +{
     charset  => 'Unicode',

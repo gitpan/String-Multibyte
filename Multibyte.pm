@@ -1,5 +1,9 @@
 package String::Multibyte;
 
+#
+# /o never allowed!
+#
+
 use strict;
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
 use Carp;
@@ -8,7 +12,7 @@ require Exporter;
 @ISA = qw(Exporter);
 @EXPORT = qw();
 
-$VERSION = '0.05';
+$VERSION = '0.06';
 
 my $PACKAGE = 'String::Multibyte'; # __PACKAGE__
 
@@ -44,7 +48,12 @@ sub islegal
 {
   my $obj = shift;
   my $re  = $obj->{regexp} or croak sprintf $Msg_undef, "regexp";
-  return !grep !/^$re*$/, @_;
+  for (@_){
+    my $str = $_;
+    $str =~ s/$re//g;
+    return '' if CORE::length($str);
+  }
+  return 1;
 }
 
 #==========
@@ -55,7 +64,8 @@ sub length
   my $obj = shift;
   my $str = shift;
   my $re  = $obj->{regexp} or croak sprintf $Msg_undef, "regexp";
-  if($obj->{verbose} && $str !~ /^$re*$/){
+
+  if($obj->{verbose} && ! $obj->islegal($str)){
     carp sprintf $Msg_malfo, $obj->{charset};
   }
   return 0 + $str =~ s/$re//g;
@@ -69,7 +79,8 @@ sub strrev
   my $obj = shift;
   my $str = shift;
   my $re  = $obj->{regexp} or croak sprintf $Msg_undef, "regexp";
-  if($obj->{verbose} && $str !~ /^$re*$/){
+
+  if($obj->{verbose} && ! $obj->islegal($str)){
     carp sprintf $Msg_malfo, $obj->{charset};
   }
   return join '', reverse $str =~ /$re/g;
@@ -82,25 +93,25 @@ sub index
 {
   my $obj = shift;
   my $re  = $obj->{regexp} or croak sprintf $Msg_undef, "regexp";
-  my($str,$sub,$pos) = @_;
-  if($obj->{verbose} &&( $str !~ /^$re*$/ || $sub !~ /^$re*$/) ){
+
+  my $cnt = 0;
+  my($str,$sub) = @_;
+  if($obj->{verbose} && ! $obj->islegal($str, $sub)){
     carp sprintf $Msg_malfo, $obj->{charset};
   }
   my $len = $obj->length($str);
+  my $pos = @_ == 3 ? $_[2] : 0;
+
   if($sub eq ""){
-    return @_ == 3 ? 
-        $pos < 0    ? 0 :
-        $pos < $len ? $pos : $len
-      : 0;
+    return $pos <= 0 ? 0 : $len < $pos ? $len : $pos;
   }
-  my $pat = quotemeta $sub;
-  if($pos && $pos > 0){
-    return -1 if $pos > $len;
-    foreach(0..$pos-1){ $str =~ s/^$re//; }
-    $str =~ /^($re*?)$pat/ ? $pos + $obj->length($1) : -1;
-  } else {
-    $str =~ /^($re*?)$pat/ ? $obj->length($1) : -1;
-  }
+  return -1 if $len < $pos;
+  my $pat = quotemeta($sub);
+  $str =~ s/^$re// ? $cnt++ : croak
+    while CORE::length($str) && $cnt < $pos;
+  $str =~ s/^$re// ? $cnt++ : croak
+    while CORE::length($str) && $str !~ /^$pat/;
+  return CORE::length($str) ? $cnt : -1;
 }
 
 #==========
@@ -110,24 +121,25 @@ sub rindex
 {
   my $obj = shift;
   my $re  = $obj->{regexp} or croak sprintf $Msg_undef, "regexp";
-  my($str,$sub,$pos) = @_;
-  if($obj->{verbose} &&( $str !~ /^$re*$/ || $sub !~ /^$re*$/) ){
+
+  my $cnt = 0;
+  my($str,$sub) = @_;
+  if($obj->{verbose} && ! $obj->islegal($str, $sub)){
     carp sprintf $Msg_malfo, $obj->{charset};
   }
   my $len = $obj->length($str);
+  my $pos = @_ == 3 ? $_[2] : $len;
   if($sub eq ""){
-    return @_ == 3 ? 
-        $pos < 0    ? 0 :
-        $pos < $len ? $pos : $len
-      : $len;
+    return $pos <= 0 ? 0 : $len <= $pos ? $len : $pos;
   }
-  return -1 if $pos && $pos < 0;
-  my $pat = quotemeta $sub;
-  (@_ == 3 
-    ? ${ $obj->substr(\$str, 0, $pos + $obj->length($sub)) }
-    : $str) =~ /^($re*)$pat/;
-  my $head = $1;
-  defined $head ? $obj->length($head) : -1;
+  return -1 if $pos < 0;
+  my $pat = quotemeta($sub);
+  my $ret = -1;
+  while($cnt <= $pos && CORE::length($str)){
+    $ret = $cnt if $str =~ /^$pat/;
+    $str =~ s/^$re// ? $cnt++ : croak;
+  }
+  return $ret;
 }
 
 #==========
@@ -137,18 +149,19 @@ sub strspn
 {
   my $obj = shift;
   my $re  = $obj->{regexp} or croak sprintf $Msg_undef, "regexp";
-  my($str, $lst, %lst, $pos);
-  ($str, $lst) = @_;
-  if($obj->{verbose} && ( $str !~ /^$re*$/ || $lst !~ /^$re*$/) ){
+
+  my($str, $lst) = @_;
+  if($obj->{verbose} && ! $obj->islegal($str, $lst)){
     carp sprintf $Msg_malfo, $obj->{charset};
   }
-  $pos = 0;
+  my $ret = 0;
+  my(%lst);
   @lst{ $lst=~ /$re/g } = ();
   while($str =~ /($re)/g){
     last if ! exists $lst{$1};
-    $pos++;
+    $ret++;
   }
-  return $pos;
+  return $ret;
 }
 
 #==========
@@ -158,18 +171,19 @@ sub strcspn
 {
   my $obj = shift;
   my $re  = $obj->{regexp} or croak sprintf $Msg_undef, "regexp";
-  my($str, $lst, %lst, $pos);
-  ($str, $lst) = @_;
-  if($obj->{verbose} && ( $str !~ /^$re*$/ || $lst !~ /^$re*$/) ){
+
+  my($str, $lst) = @_;
+  if($obj->{verbose} && ! $obj->islegal($str, $lst)){
     carp sprintf $Msg_malfo, $obj->{charset};
   }
-  $pos = 0;
+  my $ret = 0;
+  my(%lst);
   @lst{ $lst=~ /$re/g } = ();
   while($str =~ /($re)/g){
     last if exists $lst{$1};
-    $pos++;
+    $ret++;
   }
-  return $pos;
+  return $ret;
 }
 
 #==========
@@ -180,13 +194,17 @@ sub substr
   my $obj = shift;
   my $re  = $obj->{regexp} or croak sprintf $Msg_undef, "regexp";
   my(@chars, $slen, $ini, $fin, $except);
-  my($str, $off, $len, $rep) = @_;
-  if($obj->{verbose} && (ref $str ? $$str : $str) !~ /^$re*$/){
+  my($arg, $off, $len) = @_;
+  my $rep = @_ > 3 ? $_[3] : '';
+
+  my $str = ref $arg ? $$arg : $arg;
+  if($obj->{verbose} && ! $obj->islegal($str, $rep)){
     carp sprintf $Msg_malfo, $obj->{charset};
   }
-  $slen = @chars = (ref $str ? $$str : $str) =~ /$re/g;
+
+  $slen = $obj->length($str);
   $except = 1 if $slen < $off;
-  if(@_ == 2){$len = $slen - $off;}
+  if(@_ == 2){$len = $slen - $off }
   else {
     $except = 1 if $off + $slen < 0 && $len + $slen < 0;
     $except = 1 if 0 <= $len && $off + $len + $slen < 0;
@@ -199,18 +217,21 @@ sub substr
   $ini = $slen if $slen < $ini;
   $fin = $slen if $slen < $fin;
 
-  if(@_ > 3){
-    if($obj->{verbose} && $rep !~ /^$re*$/){
-      carp sprintf $Msg_malfo, $obj->{charset};
-    }
-    $_[0] = join '', @chars[0..$ini-1],$rep,@chars[$fin..@chars-1];
+  my $cnt  = 0;
+  my $plen = 0;
+  my $clen = 0;
+  while($str =~ /($re)/g){
+    if   ($cnt < $ini) { $plen += CORE::length($1) }
+    elsif($cnt < $fin) { $clen += CORE::length($1) }
+    else               { last }
+    $cnt++;
   }
-  return ref $str
-    ? \ CORE::substr($$str,
-              CORE::length(join '', @chars[0..$ini-1]),
-              CORE::length(join '', @chars[$ini..$fin-1])
-      )
-    : join('', @chars[$ini..$fin-1])
+  if(@_ > 3){
+    $_[0] = CORE::substr($str, 0,      $plen) .$rep.
+            CORE::substr($str, $plen + $clen);
+  }
+  return ref $arg ? \ CORE::substr($$arg, $plen, $clen)
+                  :   CORE::substr($str,  $plen, $clen);
 }
 
 #==========
@@ -222,7 +243,8 @@ sub mkrange
   my $obj = shift;
   my $re  = $obj->{regexp} or croak sprintf $Msg_undef, "regexp";
   my($str,$rev) = @_;
-  if($obj->{verbose} && $str !~ /^$re*$/){
+
+  if($obj->{verbose} && ! $obj->islegal($str)){
     carp sprintf $Msg_malfo, $obj->{charset};
   }
   if(!defined $obj->{nextchar}){
@@ -235,7 +257,7 @@ sub mkrange
       if   ($s eq '\\-') {$s = '-'}
       elsif($s eq '\\\\'){$s = '\\'}
       my $p = @retv ? pop(@retv) :
-		croak(sprintf $Msg_panic, "mkrange: Parse exception");
+	croak(sprintf $Msg_panic, "mkrange: Parse exception");
       push @retv, $obj->__expand($p, $s, $rev);
       $range = 0;
     }
@@ -281,7 +303,8 @@ sub strtr
   my $obj = shift;
   my $re  = $obj->{regexp} or croak sprintf $Msg_undef, "regexp";
   my $str = shift;
-  if($obj->{verbose} && $str !~ /^$re*$/){
+
+  if($obj->{verbose} && ! $obj->islegal($str)){
     carp sprintf $Msg_malfo, $obj->{charset};
   }
   my $coderef;
@@ -309,9 +332,11 @@ sub trclosure
   my $to  = shift;
   my $mod = @_ ? shift : '';
 
+  if($obj->{verbose} && ! $obj->islegal($fr, $to)){
+    carp sprintf $Msg_malfo, $obj->{charset};
+  }
   my $msg = sprintf $Msg_malfo, $obj->{charset};
 
-  if($obj->{verbose} && ($fr !~ /^$re*$/ || $to !~ /^$re*$/) ){ carp $msg }
   $h = $mod =~ /h/;
   $r = $mod =~ /r/;
   $R = $mod =~ /R/;
@@ -337,7 +362,7 @@ sub trclosure
     $mod == 3 || $mod == 7 ?
       sub { # $c: true, $d: true, $s: true/false, $mod: 3 or 7
         my $str = shift;
-        if($v && (ref $str ? $$str : $str) !~ /^$re*$/){ carp $msg }
+        if($v && !$obj->islegal(ref $str ? $$str : $str)){ carp $msg }
         my $cnt = 0; my %cnt = ();
         (ref $str ? $$str : $str) =~ s{($re)}{
           exists $hash{$1} ? $1 : (++$cnt, ++$cnt{$1}, '');
@@ -348,7 +373,7 @@ sub trclosure
     $mod == 5 ?
       sub { # $c: true, $d: false, $s: true, $mod: 5
         my $str = shift;
-        if($v && (ref $str ? $$str : $str) !~ /^$re*$/){ carp $msg }
+        if($v && !$obj->islegal(ref $str ? $$str : $str)){ carp $msg }
         my $cnt = 0; my %cnt = ();
         my $pre = '';
         my $now;
@@ -364,7 +389,7 @@ sub trclosure
     $mod == 4 || $mod == 6 ?
       sub { # $c: false, $d: true/false, $s: true, $mod: 4 or 6
         my $str = shift;
-        if($v && (ref $str ? $$str : $str) !~ /^$re*$/){ carp $msg }
+        if($v && !$obj->islegal(ref $str ? $$str : $str)){ carp $msg }
         my $cnt = 0; my %cnt = ();
         my $pre = '';
         (ref $str ? $$str : $str) =~ s{($re)}{
@@ -378,7 +403,7 @@ sub trclosure
     $mod == 1 ?
       sub { # $c: true, $d: false, $s: false, $mod: 1
         my $str = shift;
-        if($v && (ref $str ? $$str : $str) !~ /^$re*$/){ carp $msg }
+        if($v && !$obj->islegal(ref $str ? $$str : $str)){ carp $msg }
         my $cnt = 0; my %cnt = ();
         (ref $str ? $$str : $str) =~ s{($re)}{
           exists $hash{$1} ? $1 : (++$cnt, ++$cnt{$1}, @to) ? $to[-1] : $1;
@@ -389,7 +414,7 @@ sub trclosure
     $mod == 0 || $mod == 2 ?
       sub { # $c: false, $d: true/false, $s: false, $mod:  0 or 2
         my $str = shift;
-        if($v && (ref $str ? $$str : $str) !~ /^$re*$/){ carp $msg }
+        if($v && !$obj->islegal(ref $str ? $$str : $str)){ carp $msg }
         my $cnt = 0; my %cnt = ();
         (ref $str ? $$str : $str) =~ s{($re)}{
           exists $hash{$1} ? (++$cnt, ++$cnt{$1}, $hash{$1}) : $1;
@@ -410,29 +435,38 @@ sub strsplit
   my $pat = quotemeta shift;
   my $str = shift;
   my $lim = shift || 0;
-  if($obj->{verbose} && $str !~ /^$re*$/){
+
+  if($obj->{verbose} && ! $obj->islegal($str)){
     carp sprintf $Msg_malfo, $obj->{charset};
   }
-  if('' eq $pat && $lim <= 0){
+  if($pat eq '' && $lim <= 0){
     return wantarray
       ? ($str =~ /$re/g, $lim < 0 ? '' : ())
-      : ($lim < 0) + $obj->length($str)
+      : ($lim < 0) + $obj->length($str);
   }
   if($lim == 1){
     return wantarray ? ($str) : 1 ;
   }
-  my($for, $cnt, @ret);
-  $for = '' eq $pat ? "($re)" : "^($re*?)";
-  while($str =~ /$for$pat/){
-    push @ret, $1;
-    $str =~ s/$for$pat//;
-    $cnt++;
-    last if ! CORE::length $str;
-    last if $lim > 1 && $cnt >= $lim - 1;
+
+  my $cnt = 0;
+  my @ret = CORE::length $pat ? ('') : ();
+  if(CORE::length $pat){
+    while(($lim <= 0 || $cnt < $lim) && CORE::length($str)){
+      if($str =~ s/^$pat//){
+        $cnt = push @ret, '';
+      } else {
+        $str =~ s/^($re)// ? $ret[-1] .= $1 : croak;
+      }
+    }
+  } else {
+    while($cnt < $lim && CORE::length($str)){
+      croak unless $str =~ s/^($re)//;
+      $cnt = push @ret, $1;
+    }
   }
-  push @ret, $str if $str ne '' || $lim < 0 || $cnt < $lim;
+  $ret[-1] .= $str if CORE::length($str);
   if($lim == 0){pop @ret while defined $ret[-1] && $ret[-1] eq ''}
-  @ret;
+  return @ret;
 }
 
 1;
