@@ -7,7 +7,7 @@ BEGIN {
   $| = 1;
   $] >= 5.007 or
     print "1..0 # Skip: Perl 5.7 or later is recommended." and exit 0;
-  print "1..28\n";
+  print "1..31\n";
 }
 END {print "not ok 1\n" unless $loaded;}
 
@@ -247,6 +247,12 @@ print $bytes->mkrange("") eq ""
   }
 }
 
+
+sub listtostr {
+  my @a = @_;
+  return @a ? join('', map "<$_>", @a) : '';
+}
+
 {
   my $str = '  This  is   a  TEST =@ ';
   my($n, $NG);
@@ -263,8 +269,8 @@ print $bytes->mkrange("") eq ""
 # splitchar in list context
   $NG = 0;
   for $n (-1..20){
-    my $core = join ':', split //, $str, $n;
-    my $mbcs = join ':', $bytes->strsplit('',$str,$n);
+    my $core = listtostr( split //, $str, $n );
+    my $mbcs = listtostr( $bytes->strsplit('',$str,$n) );
     ++$NG unless $core eq $mbcs;
   }
   print !$NG ? "ok" : "not ok", " 26\n";
@@ -272,13 +278,40 @@ print $bytes->mkrange("") eq ""
 # split / / in list context
   $NG = 0;
   for $n (-1..5){
-    my $core = join ':', split(/ /, $str, $n);
-    my $mbcs = join ':', $bytes->strsplit(' ',$str,$n);
+    my $core = listtostr( split(/ /, $str, $n) );
+    my $mbcs = listtostr( $bytes->strsplit(' ',$str,$n) );
     ++$NG unless $core eq $mbcs;
   }
   print !$NG ? "ok" : "not ok", " 27\n";
+
+# splitchar in scalar context
+  $NG = 0;
+  for $n (-1..20){
+    my $core = @{[ split(//, '', $n) ]};
+    my $mbcs = $bytes->strsplit('', '', $n);
+    ++$NG unless $core == $mbcs;
+  }
+  print !$NG ? "ok" : "not ok", " 28\n";
+
+# splitchar in list context
+  $NG = 0;
+  for $n (-1..20){
+    my $core = listtostr( split //, '', $n );
+    my $mbcs = listtostr( $bytes->strsplit('', '', $n) );
+    ++$NG unless $core eq $mbcs;
+  }
+  print !$NG ? "ok" : "not ok", " 29\n";
+
+# split / / in list context
+  $NG = 0;
+  for $n (-1..5){
+    my $core = listtostr( split(/ /, '', $n) );
+    my $mbcs = listtostr( $bytes->strsplit(' ', '', $n) );
+    ++$NG unless $core eq $mbcs;
+  }
+  print !$NG ? "ok" : "not ok", " 30\n";
 }
 
 my %h = $bytes->strtr("hotchpotch", "a-z", '', 'h');
 print "c-2;h-3;o-2;p-1;t-2;" eq join('', map { "$_-$h{$_};" } sort keys %h)
-  ? "ok" : "not ok", " 28\n";
+  ? "ok" : "not ok", " 31\n";

@@ -7,7 +7,7 @@ BEGIN {
   $| = 1;
   $] >= 5.007 or
     print "1..0 # Skip: Perl 5.7 or later is recommended." and exit 0;
-  print "1..36\n";
+  print "1..39\n";
 }
 END {print "not ok 1\n" unless $loaded;}
 
@@ -30,10 +30,9 @@ my $mb = String::Multibyte->new('Unicode',1);
 	"ｱｲｳｴｵ",
 	"ﾊﾟｰﾙ=Perl",
 	"\001\002\003\000\n",
-	"",
-	" ",
-	'　',
-  ){ $NG++ unless $mb->islegal($_) }
+	"", " ", '　',
+  )
+ { $NG++ unless $mb->islegal($_) }
 
   print ! $NG
   && $mb->islegal("あ", "P", "", "ｶﾝｼﾞ test") 
@@ -357,6 +356,11 @@ print
   }
 }
 
+sub listtostr {
+  my @a = @_;
+  return @a ? join('', map "<$_>", @a) : '';
+}
+
 {
   my $printZ2H = $mb->trclosure(
     '０-９Ａ-Ｚａ-ｚ　／＝＋－．，：；？！＃＄％＆＠＊＜＞（）［］｛｝',
@@ -380,8 +384,8 @@ print
 # splitchar in list context
   $NG = 0;
   for $n (-1..20){
-    my $core = join ':', split //, $str, $n;
-    my $mbcs = join ':', $mb->strsplit('',$zen,$n);
+    my $core = listtostr( split //, $str, $n );
+    my $mbcs = listtostr( $mb->strsplit('',$zen,$n) );
     ++$NG unless $core eq &$printZ2H($mbcs);
   }
   print !$NG ? "ok" : "not ok", " 34\n";
@@ -389,13 +393,43 @@ print
 # split / / in list context
   $NG = 0;
   for $n (-1..5){
-    my $core = join ':', split(/ /, $str, $n);
-    my $mbcs = join ':', $mb->strsplit(' ',$str,$n);
+    my $core = listtostr( split(/ /, $str, $n) );
+    my $mbcs = listtostr( $mb->strsplit(' ',$str,$n) );
     ++$NG unless $core eq &$printZ2H($mbcs);
   }
   print !$NG ? "ok" : "not ok", " 35\n";
 }
 
+{ # split of empty string
+
+# splitchar in scalar context
+  $NG = 0;
+  for $n (-1..20){
+    my $core = @{[ split(//, '', $n) ]};
+    my $mbcs = $mb->strsplit('','',$n);
+    ++$NG unless $core == $mbcs;
+  }
+  print !$NG ? "ok" : "not ok", " 36\n";
+
+# splitchar in list context
+  $NG = 0;
+  for $n (-1..20){
+    my $core = listtostr( split //, '', $n);
+    my $mbcs = listtostr( $mb->strsplit('','',$n));
+    ++$NG unless $core eq $mbcs;
+  }
+  print !$NG ? "ok" : "not ok", " 37\n";
+
+# split / /, '' in list context
+  $NG = 0;
+  for $n (-1..5){
+    my $core = listtostr( split(/ /, '', $n) );
+    my $mbcs = listtostr( $mb->strsplit(' ', '', $n) );
+    ++$NG unless $core eq $mbcs;
+  }
+  print !$NG ? "ok" : "not ok", " 38\n";
+}
+
 my %h = $mb->strtr("hotchpotch", "a-z", '', 'h');
 print "c-2;h-3;o-2;p-1;t-2;" eq join('', map { "$_-$h{$_};" } sort keys %h)
-  ? "ok" : "not ok", " 36\n";
+  ? "ok" : "not ok", " 39\n";

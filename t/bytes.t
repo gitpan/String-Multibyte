@@ -3,7 +3,7 @@
 
 ######################### We start with some black magic to print on failure.
 
-BEGIN { $| = 1; print "1..28\n"; }
+BEGIN { $| = 1; print "1..31\n"; }
 END {print "not ok 1\n" unless $loaded;}
 use String::Multibyte;
 $^W = 1;
@@ -13,24 +13,15 @@ print "ok 1\n";
 ######################### End of black magic.
 
 my $bytes = String::Multibyte->new('Bytes',1);
-
+my $NG;
 {
   my $v;
-  my $NG = 0;
-  for(
-	"漢字テスト",
-	"abc",
-	"ｱｲｳｴｵ",
-	"ﾊﾟｰﾙ=Perl",
-	"\001\002\003\000\n",
-	"",
-	" ",
-	'　',
-	"それもそうだ\xFF\xFF",
-	"どうにもこうにも\x81\x39",
-	"\x91\x00",
-	"これは\xFFどうかな",
-  ){ $NG++ unless $bytes->islegal($_) }
+  $NG = 0;
+  for("漢字テスト", "abc", "ｱｲｳｴｵ", "ﾊﾟｰﾙ=Perl", "\001\002\003\000\n",
+	"", " ", '　', "それもそうだ\xFF\xFF",
+	"どうにもこうにも\x81\x39", "\x91\x00", "これは\xFFどうかな",
+  )
+  { $NG++ unless $bytes->islegal($_) }
 
   print ! $NG
   && $bytes->islegal("あ", "P", "", "ｶﾝｼﾞ test")
@@ -64,7 +55,6 @@ print $bytes->mkrange("") eq ""
   my($pos,$si, $bi);
 
   my $n = 1;
-  my $NG;
   $NG = 0;
   for $pos (-10..18){
     $si = index($str,$sub,$pos);
@@ -116,7 +106,6 @@ print $bytes->mkrange("") eq ""
 }
 
 {
-  my $NG;
   my $str = '01234567';
   my($i,$j);
 
@@ -185,8 +174,6 @@ print $bytes->mkrange("") eq ""
 }
 
 {
-  my $NG;
-
   my $lower = $bytes->mkrange('a-z');
   my $upper = $bytes->mkrange('A-Z');
   my $digit = $bytes->mkrange('0-9');
@@ -239,9 +226,14 @@ print $bytes->mkrange("") eq ""
   }
 }
 
+sub listtostr {
+  my @a = @_;
+  return @a ? join('', map "<$_>", @a) : '';
+}
+
 {
   my $str = '  This  is   a  TEST =@ ';
-  my($n, $NG);
+  my($n);
 
 # splitchar in scalar context
   $NG = 0;
@@ -255,8 +247,8 @@ print $bytes->mkrange("") eq ""
 # splitchar in list context
   $NG = 0;
   for $n (-1..20){
-    my $core = join ':', split //, $str, $n;
-    my $mbcs = join ':', $bytes->strsplit('',$str,$n);
+    my $core = listtostr( split //, $str, $n );
+    my $mbcs = listtostr( $bytes->strsplit('',$str,$n) );
     ++$NG unless $core eq $mbcs;
   }
   print !$NG ? "ok" : "not ok", " 26\n";
@@ -264,13 +256,41 @@ print $bytes->mkrange("") eq ""
 # split / / in list context
   $NG = 0;
   for $n (-1..5){
-    my $core = join ':', split(/ /, $str, $n);
-    my $mbcs = join ':', $bytes->strsplit(' ',$str,$n);
+    my $core = listtostr( split(/ /, $str, $n) );
+    my $mbcs = listtostr( $bytes->strsplit(' ',$str,$n) );
     ++$NG unless $core eq $mbcs;
   }
   print !$NG ? "ok" : "not ok", " 27\n";
+
+# splitchar in scalar context
+  $NG = 0;
+  for $n (-1..20){
+    my $core = @{[ split(//, '', $n) ]};
+    my $mbcs = $bytes->strsplit('','',$n);
+    ++$NG unless $core == $mbcs;
+  }
+  print !$NG ? "ok" : "not ok", " 28\n";
+
+# splitchar in list context
+  $NG = 0;
+  for $n (-1..20){
+    my $core = listtostr( split //, '', $n );
+    my $mbcs = listtostr( $bytes->strsplit('','',$n) );
+    ++$NG unless $core eq $mbcs;
+  }
+  print !$NG ? "ok" : "not ok", " 29\n";
+
+# split / / in list context
+  $NG = 0;
+  for $n (-1..5){
+    my $core = listtostr( split(/ /, '', $n) );
+    my $mbcs = listtostr( $bytes->strsplit(' ', '',$n) );
+    ++$NG unless $core eq $mbcs;
+  }
+  print !$NG ? "ok" : "not ok", " 30\n";
 }
 
 my %h = $bytes->strtr("hotchpotch", "a-z", '', 'h');
 print "c-2;h-3;o-2;p-1;t-2;" eq join('', map { "$_-$h{$_};" } sort keys %h)
-  ? "ok" : "not ok", " 28\n";
+  ? "ok" : "not ok", " 31\n";
+

@@ -12,7 +12,7 @@ require Exporter;
 @ISA = qw(Exporter);
 @EXPORT = qw();
 
-$VERSION = '0.06';
+$VERSION = '0.07';
 
 my $PACKAGE = 'String::Multibyte'; # __PACKAGE__
 
@@ -438,6 +438,9 @@ sub strsplit
 
   if($obj->{verbose} && ! $obj->islegal($str)){
     carp sprintf $Msg_malfo, $obj->{charset};
+  }
+  if($str eq ''){
+    return wantarray ? () : 0;
   }
   if($pat eq '' && $lim <= 0){
     return wantarray
