@@ -18,7 +18,7 @@ require Exporter;
 @ISA = qw(Exporter);
 @EXPORT = qw();
 
-$VERSION = '1.02';
+$VERSION = '1.03';
 
 my $PACKAGE = 'String::Multibyte'; # __PACKAGE__
 
@@ -365,10 +365,11 @@ sub __expand {
 
     my $c = $fr;
     my @retv;
+    my $nextchar = $obj->{nextchar};
     while (1) {
 	push @retv, $c;
 	last if $c eq $to;
-	$c = &{ $obj->{nextchar} }($c);
+	$c = &$nextchar($c);
 	croak $Msg_lastc if !defined $c;
     }
     return $rev ? reverse(@retv) : @retv;

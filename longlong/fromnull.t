@@ -55,16 +55,19 @@ for $name (sort keys %MBCS) {
     $] < 5.005
 	? $re = '^'.$mb->{regexp}.'(?!\n)$'
 	: eval q{ $re = qr/^$mb->{regexp}\z/ };
+
+    my $nextchar = $mb->{nextchar};
+    my $cmpchar  = $mb->{cmpchar};
     while (1) {
 	$c++;
 	# printdeb($name, $ch, "\r") if $c % 256 == 0;
 
         $NG++ unless $ch =~ /$re/;
 
-        my $next = &{ $mb->{nextchar} }($ch);
+        my $next = &$nextchar($ch);
 	$NG++ unless $ch eq $last
 			? !defined($next)
-			: 0 > &{ $mb->{cmpchar} }($ch, $next);
+			: 0 > &$cmpchar($ch, $next);
 	last if ! defined($next);
 	$ch = $next;
     }
