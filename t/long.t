@@ -16,13 +16,13 @@ print "ok 1\n";
 
 ######################### End of black magic.
 
-my $n = 3500;
-my $f = 10;
-my $len = $f * $n;
+$n = 3500;
+$f = 10;
+$len = $f * $n;
 
-my $sub = "0123456‚`‚ ˆŸ";
-my $str = $sub x $n;
-my $rev = "ˆŸ‚ ‚`6543210" x $n;
+$sub = "0123456‚`‚ ˆŸ";
+$str = $sub x $n;
+$rev = "ˆŸ‚ ‚`6543210" x $n;
 
 print $mb->islegal($str) ? "ok" : "not ok", " 2\n";
 
@@ -54,3 +54,5 @@ print $mb->substr($str,-1) eq 'ˆŸ'
 print $mb->substr($str,1000*$f,200*$f) eq ($sub x 200)
   ? "ok" : "not ok", " 13\n";
 
+1;
+__END__

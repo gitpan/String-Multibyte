@@ -4,6 +4,12 @@ package String::Multibyte;
 # /o never allowed!
 #
 
+BEGIN {
+    if (ord("A") == 193) {
+	die "String::Multibyte not ported to EBCDIC\n";
+    }
+}
+
 use strict;
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
 use Carp;
@@ -12,7 +18,7 @@ require Exporter;
 @ISA = qw(Exporter);
 @EXPORT = qw();
 
-$VERSION = '0.07';
+$VERSION = '1.00';
 
 my $PACKAGE = 'String::Multibyte'; # __PACKAGE__
 
@@ -28,269 +34,301 @@ my $Msg_lastc  = $PACKAGE ." reach the last char before end of char range";
 #==========
 # new
 #
-sub new
-{
-  my $class   = shift;
-  my $charset = shift;
-  my $verbose = shift;
-  my $pm = "$Path/$charset.pm";
-  my $self = do($pm) or croak "not exist $pm";
-  my $re = $self->{regexp} or croak sprintf $Msg_undef, "regexp";
-  if($verbose){ $self->{verbose} = $verbose }
-  if(!defined $self->{charset}){ $self->{charset} = $charset }
-  return bless $self, $class;
+sub new {
+    my $class   = shift;
+    my $charset = shift;
+    my $verbose = shift;
+    my $self;
+    if (ref $charset) {
+	$self = { %$charset };
+    } else {
+	my $pm = "$Path/$charset.pm";
+	$self = do($pm) or croak "not exist $pm";
+    }
+    my $re = $self->{regexp}
+	or croak sprintf $Msg_undef, "regexp";
+    $verbose and $self->{verbose} = $verbose;
+    defined $self->{charset}
+	or $self->{charset} = "$charset"; # stringified
+    return bless $self, $class;
 }
 
 #==========
 # islegal
 #
-sub islegal
-{
-  my $obj = shift;
-  my $re  = $obj->{regexp} or croak sprintf $Msg_undef, "regexp";
-  for (@_){
-    my $str = $_;
-    $str =~ s/$re//g;
-    return '' if CORE::length($str);
-  }
-  return 1;
+sub islegal {
+    my $obj = shift;
+    my $re  = $obj->{regexp}
+	or croak sprintf $Msg_undef, "regexp";
+    for (@_) {
+	my $str = $_;
+	$str =~ s/$re//g;
+	return '' if CORE::length($str);
+    }
+    return 1;
 }
 
 #==========
 # length
 #
-sub length
-{
-  my $obj = shift;
-  my $str = shift;
-  my $re  = $obj->{regexp} or croak sprintf $Msg_undef, "regexp";
+sub length {
+    my $obj = shift;
+    my $str = shift;
+    my $re  = $obj->{regexp}
+	or croak sprintf $Msg_undef, "regexp";
 
-  if($obj->{verbose} && ! $obj->islegal($str)){
-    carp sprintf $Msg_malfo, $obj->{charset};
-  }
-  return 0 + $str =~ s/$re//g;
+    if ($obj->{verbose} && ! $obj->islegal($str)) {
+	carp sprintf $Msg_malfo, $obj->{charset};
+    }
+    return 0 + $str =~ s/$re//g;
 }
 
 #==========
 # strrev
 #
-sub strrev
-{
-  my $obj = shift;
-  my $str = shift;
-  my $re  = $obj->{regexp} or croak sprintf $Msg_undef, "regexp";
+sub strrev {
+    my $obj = shift;
+    my $str = shift;
+    my $re  = $obj->{regexp}
+	or croak sprintf $Msg_undef, "regexp";
 
-  if($obj->{verbose} && ! $obj->islegal($str)){
-    carp sprintf $Msg_malfo, $obj->{charset};
-  }
-  return join '', reverse $str =~ /$re/g;
+    if ($obj->{verbose} && ! $obj->islegal($str)) {
+	carp sprintf $Msg_malfo, $obj->{charset};
+    }
+    return join '', reverse $str =~ /$re/g;
 }
 
 #==========
 # index
 #
-sub index
-{
-  my $obj = shift;
-  my $re  = $obj->{regexp} or croak sprintf $Msg_undef, "regexp";
+sub index {
+    my $obj = shift;
+    my $re  = $obj->{regexp}
+	or croak sprintf $Msg_undef, "regexp";
 
-  my $cnt = 0;
-  my($str,$sub) = @_;
-  if($obj->{verbose} && ! $obj->islegal($str, $sub)){
-    carp sprintf $Msg_malfo, $obj->{charset};
-  }
-  my $len = $obj->length($str);
-  my $pos = @_ == 3 ? $_[2] : 0;
+    my $cnt = 0;
+    my($str,$sub) = @_;
+    if ($obj->{verbose} && ! $obj->islegal($str, $sub)) {
+	carp sprintf $Msg_malfo, $obj->{charset};
+    }
+    my $len = $obj->length($str);
+    my $pos = @_ == 3 ? $_[2] : 0;
 
-  if($sub eq ""){
-    return $pos <= 0 ? 0 : $len < $pos ? $len : $pos;
-  }
-  return -1 if $len < $pos;
-  my $pat = quotemeta($sub);
-  $str =~ s/^$re// ? $cnt++ : croak
-    while CORE::length($str) && $cnt < $pos;
-  $str =~ s/^$re// ? $cnt++ : croak
-    while CORE::length($str) && $str !~ /^$pat/;
-  return CORE::length($str) ? $cnt : -1;
+    if ($sub eq "") {
+	return $pos <= 0 ? 0 : $len < $pos ? $len : $pos;
+    }
+    return -1 if $len < $pos;
+    my $pat = quotemeta($sub);
+    $str =~ s/^$re// ? $cnt++ : croak
+	while CORE::length($str) && $cnt < $pos;
+    $str =~ s/^$re// ? $cnt++ : croak
+	while CORE::length($str) && $str !~ /^$pat/;
+    return CORE::length($str) ? $cnt : -1;
 }
 
 #==========
 # rindex
 #
-sub rindex
-{
-  my $obj = shift;
-  my $re  = $obj->{regexp} or croak sprintf $Msg_undef, "regexp";
+sub rindex {
+    my $obj = shift;
+    my $re  = $obj->{regexp}
+	or croak sprintf $Msg_undef, "regexp";
 
-  my $cnt = 0;
-  my($str,$sub) = @_;
-  if($obj->{verbose} && ! $obj->islegal($str, $sub)){
-    carp sprintf $Msg_malfo, $obj->{charset};
-  }
-  my $len = $obj->length($str);
-  my $pos = @_ == 3 ? $_[2] : $len;
-  if($sub eq ""){
-    return $pos <= 0 ? 0 : $len <= $pos ? $len : $pos;
-  }
-  return -1 if $pos < 0;
-  my $pat = quotemeta($sub);
-  my $ret = -1;
-  while($cnt <= $pos && CORE::length($str)){
-    $ret = $cnt if $str =~ /^$pat/;
-    $str =~ s/^$re// ? $cnt++ : croak;
-  }
-  return $ret;
+    my $cnt = 0;
+    my($str,$sub) = @_;
+    if ($obj->{verbose} && ! $obj->islegal($str, $sub)) {
+	carp sprintf $Msg_malfo, $obj->{charset};
+    }
+    my $len = $obj->length($str);
+    my $pos = @_ == 3 ? $_[2] : $len;
+    if ($sub eq "") {
+	return $pos <= 0 ? 0 : $len <= $pos ? $len : $pos;
+    }
+    return -1 if $pos < 0;
+    my $pat = quotemeta($sub);
+    my $ret = -1;
+    while ($cnt <= $pos && CORE::length($str)) {
+	$ret = $cnt if $str =~ /^$pat/;
+	$str =~ s/^$re// ? $cnt++ : croak;
+    }
+    return $ret;
 }
 
 #==========
 # strspn
 #
-sub strspn
-{
-  my $obj = shift;
-  my $re  = $obj->{regexp} or croak sprintf $Msg_undef, "regexp";
+sub strspn {
+    my $obj = shift;
+    my $re  = $obj->{regexp}
+	or croak sprintf $Msg_undef, "regexp";
 
-  my($str, $lst) = @_;
-  if($obj->{verbose} && ! $obj->islegal($str, $lst)){
-    carp sprintf $Msg_malfo, $obj->{charset};
-  }
-  my $ret = 0;
-  my(%lst);
-  @lst{ $lst=~ /$re/g } = ();
-  while($str =~ /($re)/g){
-    last if ! exists $lst{$1};
-    $ret++;
-  }
-  return $ret;
+    my($str, $lst) = @_;
+    if ($obj->{verbose} && ! $obj->islegal($str, $lst)) {
+	carp sprintf $Msg_malfo, $obj->{charset};
+    }
+    my $ret = 0;
+    my(%lst);
+    @lst{ $lst=~ /$re/g } = ();
+    while ($str =~ /($re)/g) {
+	last if ! exists $lst{$1};
+	$ret++;
+    }
+    return $ret;
 }
 
 #==========
 # strcspn
 #
-sub strcspn
-{
-  my $obj = shift;
-  my $re  = $obj->{regexp} or croak sprintf $Msg_undef, "regexp";
+sub strcspn {
+    my $obj = shift;
+    my $re  = $obj->{regexp}
+	or croak sprintf $Msg_undef, "regexp";
 
-  my($str, $lst) = @_;
-  if($obj->{verbose} && ! $obj->islegal($str, $lst)){
-    carp sprintf $Msg_malfo, $obj->{charset};
-  }
-  my $ret = 0;
-  my(%lst);
-  @lst{ $lst=~ /$re/g } = ();
-  while($str =~ /($re)/g){
-    last if exists $lst{$1};
-    $ret++;
-  }
-  return $ret;
+    my($str, $lst) = @_;
+    if ($obj->{verbose} && ! $obj->islegal($str, $lst)) {
+	carp sprintf $Msg_malfo, $obj->{charset};
+    }
+    my $ret = 0;
+    my(%lst);
+    @lst{ $lst=~ /$re/g } = ();
+    while ($str =~ /($re)/g) {
+	last if exists $lst{$1};
+	$ret++;
+    }
+    return $ret;
 }
 
 #==========
 # substr
-# 
-sub substr
-{
-  my $obj = shift;
-  my $re  = $obj->{regexp} or croak sprintf $Msg_undef, "regexp";
-  my(@chars, $slen, $ini, $fin, $except);
-  my($arg, $off, $len) = @_;
-  my $rep = @_ > 3 ? $_[3] : '';
+#
+sub substr {
+    my $obj = shift;
+    my $re  = $obj->{regexp}
+	or croak sprintf $Msg_undef, "regexp";
+    my(@chars, $slen, $ini, $fin, $except);
+    my($arg, $off, $len) = @_;
+    my $rep = @_ > 3 ? $_[3] : '';
 
-  my $str = ref $arg ? $$arg : $arg;
-  if($obj->{verbose} && ! $obj->islegal($str, $rep)){
-    carp sprintf $Msg_malfo, $obj->{charset};
-  }
+    my $str = ref $arg ? $$arg : $arg;
+    if ($obj->{verbose} && ! $obj->islegal($str, $rep)) {
+	carp sprintf $Msg_malfo, $obj->{charset};
+    }
 
-  $slen = $obj->length($str);
-  $except = 1 if $slen < $off;
-  if(@_ == 2){$len = $slen - $off }
-  else {
-    $except = 1 if $off + $slen < 0 && $len + $slen < 0;
-    $except = 1 if 0 <= $len && $off + $len + $slen < 0;
-  }
-  if($except){ if(@_ > 3){croak $Msg_outstr} else {return} }
-  $ini = $off < 0 ? $slen + $off : $off;
-  $fin = $len < 0 ? $slen + $len : $ini + $len;
-  $ini = 0     if $ini < 0;
-  $fin = $ini  if $ini > $fin;
-  $ini = $slen if $slen < $ini;
-  $fin = $slen if $slen < $fin;
+    $slen = $obj->length($str);
+    $except = 1 if $slen < $off;
+    if (@_ == 2) {
+	$len = $slen - $off;
+    } else {
+	$except = 1 if $off + $slen < 0 && $len + $slen < 0;
+	$except = 1 if 0 <= $len && $off + $len + $slen < 0;
+    }
+    if ($except) {
+	if(@_ > 3) {
+	    croak $Msg_outstr;
+	} else {
+	    return;
+	}
+    }
+    $ini = $off < 0 ? $slen + $off : $off;
+    $fin = $len < 0 ? $slen + $len : $ini + $len;
+    $ini = 0     if $ini < 0;
+    $fin = $ini  if $ini > $fin;
+    $ini = $slen if $slen < $ini;
+    $fin = $slen if $slen < $fin;
 
-  my $cnt  = 0;
-  my $plen = 0;
-  my $clen = 0;
-  while($str =~ /($re)/g){
-    if   ($cnt < $ini) { $plen += CORE::length($1) }
-    elsif($cnt < $fin) { $clen += CORE::length($1) }
-    else               { last }
-    $cnt++;
-  }
-  if(@_ > 3){
-    $_[0] = CORE::substr($str, 0,      $plen) .$rep.
-            CORE::substr($str, $plen + $clen);
-  }
-  return ref $arg ? \ CORE::substr($$arg, $plen, $clen)
-                  :   CORE::substr($str,  $plen, $clen);
+    my $cnt  = 0;
+    my $plen = 0;
+    my $clen = 0;
+    while ($str =~ /($re)/g) {
+	if ($cnt < $ini) {
+	    $plen += CORE::length($1);
+	} elsif ($cnt < $fin) {
+	    $clen += CORE::length($1);
+	} else {
+	    last;
+	}
+	$cnt++;
+    }
+    if (@_ > 3) {
+	$_[0] = CORE::substr($str, 0,      $plen) .$rep.
+	        CORE::substr($str, $plen + $clen);
+    }
+    return ref $arg
+	? \ CORE::substr($$arg, $plen, $clen)
+	:   CORE::substr($str,  $plen, $clen);
 }
 
 #==========
 # mkrange
 #
-sub mkrange
-{
-  my($s, @retv, $range);
-  my $obj = shift;
-  my $re  = $obj->{regexp} or croak sprintf $Msg_undef, "regexp";
-  my($str,$rev) = @_;
+sub mkrange {
+    my($s, @retv, $range);
+    my $obj = shift;
+    my $re  = $obj->{regexp}
+	or croak sprintf $Msg_undef, "regexp";
+    my($str,$rev) = @_;
+    my $hyp = exists $obj->{hyphen} ? $obj->{hyphen} : '-';
+    my $esc = exists $obj->{escape} ? $obj->{escape} : '\\';
 
-  if($obj->{verbose} && ! $obj->islegal($str)){
-    carp sprintf $Msg_malfo, $obj->{charset};
-  }
-  if(!defined $obj->{nextchar}){
-    return wantarray ? $str =~ /$re/g : $str;
-  }
-  $str =~ s/^-/\\-/;
-  $range = 0;
-  foreach $s ($str =~ /\G(?:\\\\|\\-|$re)/g){
-    if($range){
-      if   ($s eq '\\-') {$s = '-'}
-      elsif($s eq '\\\\'){$s = '\\'}
-      my $p = @retv ? pop(@retv) :
-	croak(sprintf $Msg_panic, "mkrange: Parse exception");
-      push @retv, $obj->__expand($p, $s, $rev);
-      $range = 0;
+    if ($obj->{verbose} && ! $obj->islegal($str)) {
+	carp sprintf "$Msg_malfo in mkrange", $obj->{charset};
     }
-    else {
-      if($s eq '-'){$range = 1}
-      elsif($s eq '\\-') {push @retv, '-' }
-      elsif($s eq '\\\\'){push @retv, '\\'}
-      else		 {push @retv, $s }
+    if (!defined $obj->{nextchar}) {
+	return wantarray ? $str =~ /$re/g : $str;
     }
-  }
-  push @retv, '-' if $range;
-  wantarray ? @retv : @retv ? join('', @retv) : '';
+    $str =~ s/^\Q$hyp\E/$esc$hyp/;
+    $range = 0;
+    foreach $s ($str =~ /\G(?:\Q$esc$esc\E|\Q$esc$hyp\E|$re)/g) {
+	if ($range) {
+	    if ($s eq "$esc$hyp") {
+		$s = $hyp;
+	    } elsif ($s eq "$esc$esc") {
+		$s = $esc;
+	    }
+	    my $p = @retv
+		? pop(@retv)
+		: croak(sprintf $Msg_panic, "mkrange: Parse exception" .
+		    "; no initial character in a range");
+	    push @retv, $obj->__expand($p, $s, $rev);
+	    $range = 0;
+	}
+	else {
+	    if ($s eq $hyp) {
+		$range = 1;
+	    } elsif($s eq "$esc$hyp") {
+		push @retv, $hyp;
+	    } elsif ($s eq "$esc$esc") {
+		push @retv, $esc;
+	    } else {
+		push @retv, $s;
+	    }
+	}
+    }
+    push @retv, $hyp if $range;
+    wantarray ? @retv : @retv ? join('', @retv) : '';
 }
 
-sub __expand
-{
-  my $obj = shift;
-  my($fr,$to,$rev) = @_;
+sub __expand {
+    my $obj = shift;
+    my($fr,$to,$rev) = @_;
 
-  if(defined $obj->{cmpchar} &&
-    &{ $obj->{cmpchar} }($fr,$to) > 0)
-    { if($rev){($fr,$to) = ($to,$fr)} else { return } }
-  else {$rev = 0}
+    if (defined $obj->{cmpchar} &&
+	    &{ $obj->{cmpchar} }($fr,$to) > 0) {
+	return if ! $rev;
+	($fr,$to) = ($to,$fr);
+    } else {
+	$rev = 0;
+    }
 
-  my $c = $fr;
-  my @retv;
-  while(1){
-    push @retv, $c;
-    last if $c eq $to;
-    $c = &{ $obj->{nextchar} }($c);
-    croak $Msg_lastc if !defined $c;
-  }
-  return $rev ? reverse(@retv) : @retv;
+    my $c = $fr;
+    my @retv;
+    while (1) {
+	push @retv, $c;
+	last if $c eq $to;
+	$c = &{ $obj->{nextchar} }($c);
+	croak $Msg_lastc if !defined $c;
+    }
+    return $rev ? reverse(@retv) : @retv;
 }
 
 #==========
@@ -298,178 +336,208 @@ sub __expand
 #
 my %Cache;
 
-sub strtr
-{
-  my $obj = shift;
-  my $re  = $obj->{regexp} or croak sprintf $Msg_undef, "regexp";
-  my $str = shift;
+sub strtr {
+    my $obj = shift;
+    my $re  = $obj->{regexp}
+	or croak sprintf $Msg_undef, "regexp";
+    my $str = shift;
 
-  if($obj->{verbose} && ! $obj->islegal($str)){
-    carp sprintf $Msg_malfo, $obj->{charset};
-  }
-  my $coderef;
-  if(defined $_[2] && $_[2] =~ /o/){
-    $coderef = ($Cache{ $obj->{charset} }
-	{ $_[0] }{ $_[1] }{ defined $_[2] ? $_[2] : ''}
-	||= $obj->trclosure(@_) );
-  }
-  else {
-    $coderef = $obj->trclosure(@_);
-  }
-  &$coderef($str);
+    if ($obj->{verbose} && ! $obj->islegal(ref $str ? $$str : $str)) {
+	carp sprintf "$Msg_malfo in strtr", $obj->{charset};
+    }
+    my $coderef;
+    if (defined $_[2] && $_[2] =~ /o/) {
+	$coderef = (
+	    $Cache{ $obj->{charset} }{ $_[0] }{ $_[1] }
+		{ defined $_[2] ? $_[2] : ''} ||= $obj->trclosure(@_)
+	);
+    }
+    else {
+	$coderef = $obj->trclosure(@_);
+    }
+    &$coderef($str);
 }
 
 #============
 # trclosure
 #
-sub trclosure
-{
-  my(@fr, @to, $h, $r, $R, $c, $d, $s, $v, $i, %hash);
-  my $obj = shift;
-  my $re  = $obj->{regexp} or croak sprintf $Msg_undef, "regexp";
+sub trclosure {
+    my(@fr, @to, $h, $r, $R, $c, $d, $s, $v, $i, %hash);
+    my $obj = shift;
+    my $re  = $obj->{regexp} or croak sprintf $Msg_undef, "regexp";
 
-  my $fr  = shift;
-  my $to  = shift;
-  my $mod = @_ ? shift : '';
+    my $fr  = shift;
+    my $to  = shift;
+    my $mod = @_ ? shift : '';
 
-  if($obj->{verbose} && ! $obj->islegal($fr, $to)){
-    carp sprintf $Msg_malfo, $obj->{charset};
-  }
-  my $msg = sprintf $Msg_malfo, $obj->{charset};
+    if ($obj->{verbose} && ! $obj->islegal($fr, $to)) {
+	carp sprintf "$Msg_malfo in trclosure", $obj->{charset};
+    }
+    my $msg = sprintf "$Msg_malfo in closure", $obj->{charset};
 
-  $h = $mod =~ /h/;
-  $r = $mod =~ /r/;
-  $R = $mod =~ /R/;
-  $v = $obj->{verbose};
+    $h = $mod =~ /h/;
+    $r = $mod =~ /r/;
+    $R = $mod =~ /R/;
+    $v = $obj->{verbose};
 
-  $fr = scalar $obj->mkrange($fr, $r) unless $R;
-  @fr = $fr =~ /\G$re/g;
-  $to = scalar $obj->mkrange($to, $r) unless $R;
-  @to = $to =~ /\G$re/g;
+    $fr = scalar $obj->mkrange($fr, $r) unless $R;
+    @fr = $fr =~ /\G$re/g;
+    $to = scalar $obj->mkrange($to, $r) unless $R;
+    @to = $to =~ /\G$re/g;
 
-  $c = $mod =~ /c/;
-  $d = $mod =~ /d/;
-  $s = $mod =~ /s/;
-  $mod = $s * 4 + $d * 2 + $c;
+    $c = $mod =~ /c/;
+    $d = $mod =~ /d/;
+    $s = $mod =~ /s/;
+    $mod = $s * 4 + $d * 2 + $c;
 
-  for($i = 0; $i < @fr; $i++){
-    next if exists $hash{ $fr[$i] };
-    $hash{ $fr[$i] } =
-    @to ? defined $to[$i] ? $to[$i] : $d ? '' : $to[-1]
-        : $d && !$c ? '' : $fr[$i];
-  }
-  return
-    $mod == 3 || $mod == 7 ?
-      sub { # $c: true, $d: true, $s: true/false, $mod: 3 or 7
-        my $str = shift;
-        if($v && !$obj->islegal(ref $str ? $$str : $str)){ carp $msg }
-        my $cnt = 0; my %cnt = ();
-        (ref $str ? $$str : $str) =~ s{($re)}{
-          exists $hash{$1} ? $1 : (++$cnt, ++$cnt{$1}, '');
-        }ge;
-        return $h ? wantarray ? %cnt : \%cnt
-                  : ref $str  ? $cnt : $str;
-      } :
-    $mod == 5 ?
-      sub { # $c: true, $d: false, $s: true, $mod: 5
-        my $str = shift;
-        if($v && !$obj->islegal(ref $str ? $$str : $str)){ carp $msg }
-        my $cnt = 0; my %cnt = ();
-        my $pre = '';
-        my $now;
-        (ref $str ? $$str : $str) =~ s{($re)}{
-          exists $hash{$1} ? ($pre = '', $1) : (++$cnt, ++$cnt{$1},
-            $now = @to ? $to[-1] : $1, 
-            $now eq $pre ? '' : ($pre = $now) 
-          );
-        }ge;
-        return $h ? wantarray ? %cnt : \%cnt
-                  : ref $str  ? $cnt : $str;
-      } :
-    $mod == 4 || $mod == 6 ?
-      sub { # $c: false, $d: true/false, $s: true, $mod: 4 or 6
-        my $str = shift;
-        if($v && !$obj->islegal(ref $str ? $$str : $str)){ carp $msg }
-        my $cnt = 0; my %cnt = ();
-        my $pre = '';
-        (ref $str ? $$str : $str) =~ s{($re)}{
-          exists $hash{$1} ? (++$cnt, ++$cnt{$1},
-             $hash{$1} eq '' || $hash{$1} eq $pre ? '' : ($pre = $hash{$1})
-          ) : ($pre = '', $1);
-        }ge;
-        return $h ? wantarray ? %cnt : \%cnt
-                  : ref $str  ? $cnt : $str;
-      } :
-    $mod == 1 ?
-      sub { # $c: true, $d: false, $s: false, $mod: 1
-        my $str = shift;
-        if($v && !$obj->islegal(ref $str ? $$str : $str)){ carp $msg }
-        my $cnt = 0; my %cnt = ();
-        (ref $str ? $$str : $str) =~ s{($re)}{
-          exists $hash{$1} ? $1 : (++$cnt, ++$cnt{$1}, @to) ? $to[-1] : $1;
-        }ge;
-        return $h ? wantarray ? %cnt : \%cnt
-                  : ref $str  ? $cnt : $str;
-      } :
-    $mod == 0 || $mod == 2 ?
-      sub { # $c: false, $d: true/false, $s: false, $mod:  0 or 2
-        my $str = shift;
-        if($v && !$obj->islegal(ref $str ? $$str : $str)){ carp $msg }
-        my $cnt = 0; my %cnt = ();
-        (ref $str ? $$str : $str) =~ s{($re)}{
-          exists $hash{$1} ? (++$cnt, ++$cnt{$1}, $hash{$1}) : $1;
-        }ge;
-        return $h ? wantarray ? %cnt : \%cnt
-                  : ref $str  ? $cnt : $str;
-      } :
-      sub { croak sprintf $Msg_panic, "trclosure! Invalid Closure!" }
+    for ($i = 0; $i < @fr; $i++) {
+	next if exists $hash{ $fr[$i] };
+	$hash{ $fr[$i] } = @to
+	     ? defined $to[$i] ? $to[$i] : $d ? '' : $to[-1]
+	     : $d && !$c ? '' : $fr[$i];
+    }
+    return
+	$mod == 3 || $mod == 7 ?
+	    sub { # $c: true, $d: true, $s: true/false, $mod: 3 or 7
+		my $str = shift;
+		if ($v && !$obj->islegal(ref $str ? $$str : $str)) {
+		    carp $msg;
+		}
+		my $cnt = 0;
+		my %cnt = ();
+		(ref $str ? $$str : $str) =~ s{($re)}{
+		    exists $hash{$1} ? $1 : (++$cnt, ++$cnt{$1}, '');
+		}ge;
+		return $h
+		    ? wantarray ? %cnt : \%cnt
+		    : ref $str  ? $cnt : $str;
+	    } :
+	$mod == 5 ?
+	    sub { # $c: true, $d: false, $s: true, $mod: 5
+		my $str = shift;
+		if ($v && !$obj->islegal(ref $str ? $$str : $str)) {
+		    carp $msg;
+		}
+		my $cnt = 0;
+		my %cnt = ();
+		my $pre = '';
+		my $now;
+		(ref $str ? $$str : $str) =~ s{($re)}{
+		    exists $hash{$1}
+			? ($pre = '', $1)
+			: (++$cnt, ++$cnt{$1}, $now = @to ? $to[-1] : $1,
+			   $now eq $pre ? '' : ($pre = $now) );
+		}ge;
+		return $h
+		    ? wantarray ? %cnt : \%cnt
+		    : ref $str  ? $cnt : $str;
+	    } :
+	$mod == 4 || $mod == 6 ?
+	    sub { # $c: false, $d: true/false, $s: true, $mod: 4 or 6
+		my $str = shift;
+		if ($v && !$obj->islegal(ref $str ? $$str : $str)) {
+		    carp $msg;
+		}
+		my $cnt = 0;
+		my %cnt = ();
+		my $pre = '';
+		(ref $str ? $$str : $str) =~ s{($re)}{
+		    exists $hash{$1}
+			? (++$cnt, ++$cnt{$1},
+			    $hash{$1} eq '' || $hash{$1} eq $pre
+				? '' : ($pre = $hash{$1}))
+			: ($pre = '', $1);
+		}ge;
+		return $h
+		    ? wantarray ? %cnt : \%cnt
+		    : ref $str  ? $cnt : $str;
+	    } :
+	$mod == 1 ?
+	    sub { # $c: true, $d: false, $s: false, $mod: 1
+		my $str = shift;
+		if ($v && !$obj->islegal(ref $str ? $$str : $str)) {
+		    carp $msg;
+		}
+		my $cnt = 0;
+		my %cnt = ();
+		(ref $str ? $$str : $str) =~ s{($re)}{
+		    exists $hash{$1}
+			? $1
+			: (++$cnt, ++$cnt{$1}, @to) ? $to[-1] : $1;
+		}ge;
+	    return $h
+		? wantarray ? %cnt : \%cnt
+		: ref $str  ? $cnt : $str;
+	    } :
+	$mod == 0 || $mod == 2 ?
+	    sub { # $c: false, $d: true/false, $s: false, $mod:  0 or 2
+		my $str = shift;
+		if ($v && !$obj->islegal(ref $str ? $$str : $str)) {
+		    carp $msg;
+		}
+		my $cnt = 0;
+		my %cnt = ();
+		(ref $str ? $$str : $str) =~ s{($re)}{
+		    exists $hash{$1}
+			? (++$cnt, ++$cnt{$1}, $hash{$1})
+			: $1;
+		}ge;
+		return $h
+		    ? wantarray ? %cnt : \%cnt
+		    : ref $str  ? $cnt : $str;
+	    } :
+	    sub {
+		croak sprintf $Msg_panic, "trclosure! Invalid Closure!";
+	    }
 }
 
 #============
 # strsplit
 #
-sub strsplit
-{
-  my $obj = shift;
-  my $re  = $obj->{regexp} or croak sprintf $Msg_undef, "regexp";
-  my $pat = quotemeta shift;
-  my $str = shift;
-  my $lim = shift || 0;
+sub strsplit {
+    my $obj = shift;
+    my $re  = $obj->{regexp} or croak sprintf $Msg_undef, "regexp";
+    my $pat = quotemeta shift;
+    my $str = shift;
+    my $lim = shift || 0;
 
-  if($obj->{verbose} && ! $obj->islegal($str)){
-    carp sprintf $Msg_malfo, $obj->{charset};
-  }
-  if($str eq ''){
-    return wantarray ? () : 0;
-  }
-  if($pat eq '' && $lim <= 0){
-    return wantarray
-      ? ($str =~ /$re/g, $lim < 0 ? '' : ())
-      : ($lim < 0) + $obj->length($str);
-  }
-  if($lim == 1){
-    return wantarray ? ($str) : 1 ;
-  }
+    if ($obj->{verbose} && ! $obj->islegal($str)) {
+	carp sprintf $Msg_malfo, $obj->{charset};
+    }
+    if ($str eq '') {
+	return wantarray ? () : 0;
+    }
+    if ($pat eq '' && $lim <= 0) {
+	return wantarray
+	    ? ($str =~ /$re/g, $lim < 0 ? '' : ())
+	    : ($lim < 0) + $obj->length($str);
+    }
+    if ($lim == 1) {
+	return wantarray ? ($str) : 1 ;
+    }
 
-  my $cnt = 0;
-  my @ret = CORE::length $pat ? ('') : ();
-  if(CORE::length $pat){
-    while(($lim <= 0 || $cnt < $lim) && CORE::length($str)){
-      if($str =~ s/^$pat//){
-        $cnt = push @ret, '';
-      } else {
-        $str =~ s/^($re)// ? $ret[-1] .= $1 : croak;
-      }
+    my $cnt = 0;
+    my @ret = CORE::length $pat ? ('') : ();
+    if (CORE::length $pat) {
+	while(($lim <= 0 || $cnt < $lim) && CORE::length($str)) {
+	    if ($str =~ s/^$pat//) {
+		$cnt = push @ret, '';
+	    } else {
+		$str =~ s/^($re)// ? $ret[-1] .= $1 : croak;
+	    }
+	}
+    } else {
+	while ($cnt < $lim && CORE::length($str)) {
+	    $str =~ s/^($re)// or croak;
+	    $cnt = push @ret, $1;
+	}
     }
-  } else {
-    while($cnt < $lim && CORE::length($str)){
-      croak unless $str =~ s/^($re)//;
-      $cnt = push @ret, $1;
+    $ret[-1] .= $str if CORE::length($str);
+    if ($lim == 0) {
+	pop @ret
+	    while defined $ret[-1] && $ret[-1] eq '';
     }
-  }
-  $ret[-1] .= $str if CORE::length($str);
-  if($lim == 0){pop @ret while defined $ret[-1] && $ret[-1] eq ''}
-  return @ret;
+    return @ret;
 }
 
 1;
@@ -477,14 +545,14 @@ __END__
 
 =head1 NAME
 
-String::Multibyte - Perl module to manipulate multibyte character strings
+String::Multibyte - manipulation of multibyte character strings
 
 =head1 SYNOPSIS
 
-  use String::Multibyte;
+    use String::Multibyte;
 
-  $utf8 = String::Multibyte->new('UTF8');
-  $utf8_len = $utf8->length($utf8_str);
+    $utf8 = String::Multibyte->new('UTF8');
+    $utf8_len = $utf8->length($utf8_str);
 
 =head1 DESCRIPTION
 
@@ -496,25 +564,52 @@ to manipulate multiple-byte character strings.
 
 The definition files are sited under the C</String/Multibyte> directory.
 
-The definition file must return a hashref, whose keys should
-include C<('charset', 'regexp', 'nextchar', 'cmpchar' )>.
+The definition file must return a hashref, having key(s) named as following.
 
-The value for the key C<'charset'>, is a string of the charset name.
-Omission of the C<'charset'> matters very little.
+=over 4
+
+=item C<charset>
+
+The value for the key C<'charset'> stands for a string of the charset name.
+In almost case, omission of the C<'charset'> matters very little,
+but keep them not conflict among another charset.
+
+=item C<regexp>
 
 The value for the key C<'regexp'>, REQUIRED, is a regexp
 matching one character of the concerned charset.
 If the C<'regexp'> is omitted, calling any method is croaked.
+
+=item C<nextchar>
 
 The value for the key C<'nextchar'> must be a coderef
 that returns the next character to the specified character.
 If the C<'nextchar'> coderef is omitted, C<mkrange> and C<strtr>
 functions don't understand hyphen metacharacter for character ranges.
 
+=item C<cmpchar>
+
 The value for the key C<'cmpchar'> must be a coderef
 that compares the specified two characters.
 If the C<'cmpchar'> coderef is omitted, C<mkrange> and C<strtr>
 functions don't understand reverse character ranges.
+
+=item C<hyphen>
+
+The value for the key C<'hyphen'> is a character to stand for
+a character range. The default is C<'-'>.
+
+=item C<escape>
+
+The value for the key C<'escape'> is an escape character
+for a C<hyphen> character. The default is C<'\\'>.
+The C<'escape'> character is valid only before a C<hyphen>
+or another C<'escape'> (e.g. C<'\\\\-]'> means C<'\\'> to C<']'>;
+C<'\\\\\-]'> means C<'\\'>, C<'-'>, and C<']'>).
+If an C<'escape'> character is followed by any character
+other than C<'escape'> or C<'hyphen'>, it is parsed literally.
+
+=back
 
 =head2 Constructor
 
@@ -526,14 +621,21 @@ functions don't understand reverse character ranges.
 
 C<CHARSET> is the charset name; exactly speaking,
 the file name of the definition file (without the suffix C<.pm>).
-
-returns the instance to tell methods in which charset
+It returns the instance to tell methods in which charset
 the specified strings should be handled.
 
-  e.g.
     $sjis = String::Multibyte->new('ShiftJIS');
     $substr = $sjis->substr('あいうえお',2,2); # 'うえ'
       # 'あいうえお' should be encoded in Shift_JIS.
+
+C<CHARSET> may be a hashref; this is how to define a charset
+without F<.pm> file.
+
+    # see perlfaq6  :-)
+    my $martian  = String::Multibyte->new({
+        charset => "martian",
+        regexp => '[A-Z][A-Z]|[^A-Z]',
+    });
 
 If true value is specified as C<VERBOSE>,
 the called method (excepting C<islegal>) will check its arguments
@@ -587,43 +689,43 @@ Returns a reversed string.
 
 Returns the position of the first occurrence
 of C<SUBSTR> in C<STRING> at or after C<POSITION>.
-If C<POSITION> is omitted, starts searching 
-from the beginning of the string. 
+If C<POSITION> is omitted, starts searching
+from the beginning of the string.
 
-If the substring is not found, returns -1. 
+If the substring is not found, returns -1.
 
 =item C<$mbcs-E<gt>rindex(STRING, SUBSTR)>
 
 =item C<$mbcs-E<gt>rindex(STRING, SUBSTR, POSITION)>
 
-Returns the position of the last occurrence 
+Returns the position of the last occurrence
 of C<SUBSTR> in C<STRING> at or after C<POSITION>.
-If C<POSITION> is specified, returns the last 
-occurrence at or before that position. 
+If C<POSITION> is specified, returns the last
+occurrence at or before that position.
 
-If the substring is not found, returns -1. 
+If the substring is not found, returns -1.
 
 =item C<$mbcs-E<gt>strspn(STRING, SEARCHLIST)>
 
-Returns returns the position of the first occurrence of 
+Returns returns the position of the first occurrence of
 any character not contained in the search list.
 
   $mbcs->strspn("+0.12345*12", "+-.0123456789");
-  # returns 8. 
+  # returns 8.
 
 If the specified string does not contain any character
 in the search list, returns 0.
 
-The string consists of characters in the search list, 
+The string consists of characters in the search list,
 the returned value equals the length of the string.
 
 =item C<$mbcs-E<gt>strcspn(STRING, SEARCHLIST)>
 
-Returns returns the position of the first occurrence of 
+Returns returns the position of the first occurrence of
 any character contained in the search list.
 
   $mbcs->strcspn("Perlは面白い。", "赤青黄白黒");
-  # returns 6. 
+  # returns 6.
 
 If the specified string does not contain any character
 in the search list,
@@ -707,9 +809,9 @@ About the character order for each charset, see its definition file.
 If the character order is undefined in the definition file,
 returns an identical string with the specified string.
 
-A character range is specified with a HYPHEN-MINUS, C<'-'>. The backslashed 
+A character range is specified with a HYPHEN-MINUS, C<'-'>. The backslashed
 combinations C<'\-'> and C<'\\'> are used instead of the characters
-C<'-'> and C<'\'>, respectively. The hyphen at the beginning or 
+C<'-'> and C<'\'>, respectively. The hyphen at the beginning or
 end of the range is also evaluated as the hyphen itself.
 
 For example, C<$mbcs-E<gt>mkrange('+\-0-9A-F')> returns
@@ -734,7 +836,7 @@ reverse character ranges such as C<'9-0'>, C<'Z-A'> are allowed.
 =item C<$mbcs-E<gt>strtr(STRING or SCALAR REF, SEARCHLIST, REPLACEMENTLIST, MODIFIER)>
 
 Transliterates all occurrences of the characters found in the search list
-with the corresponding character in the replacement list. 
+with the corresponding character in the replacement list.
 
 If a reference of scalar variable is specified as the first argument,
 returns the number of characters replaced or deleted;
@@ -759,7 +861,7 @@ are supported.
 
 If the C<REPLACEMENTLIST> is empty (specified as C<''>, not C<undef>,
 because the use of uninitialized value causes warning under -w option),
-the C<SEARCHLIST> is replicated. 
+the C<SEARCHLIST> is replicated.
 
 If the replacement list is shorter than the search list,
 the final character in the replacement list
@@ -767,7 +869,7 @@ is replicated till it is long enough
 (but differently works when the 'd' modifier is used).
 
   $mbcs->strtr(\$str, 'ぁ-んァ-ヶｦ-ﾟ', '#');
-    # replaces all Kana letters by '#'. 
+    # replaces all Kana letters by '#'.
 
 B<MODIFIER>
 
@@ -780,14 +882,14 @@ B<MODIFIER>
     o   Caches the conversion table internally.
 
   $mbcs->strtr(\$str, 'ぁ-んァ-ヶｦ-ﾟ', '');
-    # counts all Kana letters in $str. 
-
+    # counts all Kana letters in $str.
 
   $mbcs->strtr(\$str, 'ぁ-んァ-ヶｦ-ﾟ', '', 'h');
-    # counts all Kana letters in $str and return a histogram. 
+    # counts all Kana letters in $str and return a histogram,
+    # like ('あ' => 3, 'が' => 1, 'ソ' => 2), etc.
 
   $mbcs->$onlykana = strtr($str, 'ぁ-んァ-ヶｦ-ﾟ', '', 'cd');
-    # deletes all characters except Kana. 
+    # deletes all characters except Kana.
 
   $mbcs->strtr(\$str, " \x81\x40\n\r\t\f", '', 'd');
     # deletes all whitespace characters including full-width space
@@ -813,7 +915,7 @@ If C<'r'> modifier is specified, reverse character ranges are allowed. e.g.
 
    $mbcs->strtr($str, "0-9", "9-0", "r")
 
-     is identical to
+     is equivalent to
 
    $mbcs->strtr($str, "0123456789", "9876543210")
 
@@ -822,7 +924,7 @@ B<Caching the conversion table>
 If C<'o'> modifier is specified, the conversion table is cached internally.
 e.g.
 
-  foreach(@hiragana_strings){
+  foreach (@hiragana_strings) {
     print $mbcs->strtr($_, 'ぁ-ん', 'ァ-ン', 'o');
   }
   # katakana strings are printed
@@ -831,7 +933,7 @@ will be almost as efficient as this:
 
   $hiragana_to_katakana = $mbcs->trclosure('ぁ-ん', 'ァ-ン');
 
-  foreach(@hiragana_strings){
+  foreach (@hiragana_strings) {
     print &$hiragana_to_katakana($_);
   }
 
@@ -869,7 +971,7 @@ as you need not specify arguments every time.
   # TEL ：〇一二四－四五－六七八九
   # FAX ：〇一二四－五一－五三六八
 
-The functionality of the closure made by C<trclosure()> is equivalent 
+The functionality of the closure made by C<trclosure()> is equivalent
 to that of C<strtr()>. Frankly speaking, the C<strtr()> calls
 C<trclosure()> internally and uses the returned closure.
 
@@ -877,23 +979,18 @@ C<trclosure()> internally and uses the returned closure.
 
 =head1 BUGS
 
-This modules supposes C<$[> is always equal to 0, never 1. 
-
-The functions provided by this library use B<many> regexp operations.
-Therefore, C<$1> etc. values may be changed or discarded unexpectedly.
-I suggest you save it in a certain variable 
-before call of the function.
+This modules supposes C<$[> is always equal to 0, never 1.
 
 =head1 AUTHOR
 
-Tomoyuki SADAHIRO
+SADAHIRO, Tomoyuki
 
-  bqw10602@nifty.com
-  http://homepage1.nifty.com/nomenclator/perl/
+    SADAHIRO@cpan.org
+    http://homepage1.nifty.com/nomenclator/perl/
 
-  Copyright(C) 2001, SADAHIRO Tomoyuki. Japan. All rights reserved.
+    Copyright(C) 2001-2002; Tomoyuki, SADAHIRO. Japan. All rights reserved.
 
-This program is free software; you can redistribute it and/or 
+This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.
 
 =head1 SEE ALSO

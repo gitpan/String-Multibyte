@@ -1,24 +1,31 @@
-String::Multibyte.pm version 0.06
+String::Multibyte.pm version 1.00
 ================
 
-String::Multibyte - Perl module to manipulate multibyte character strings.
+String::Multibyte - manipulation multibyte character strings.
 
 SYNOPSIS
 
   use String::Multibyte
   $sjis = String::Multibyte->new('ShiftJIS');
-  $sjis_len = $sjis->length($sjis_str);
+  $sjis_length = $sjis->length($sjis_string);
 
 DESCRIPTION
 
 This module provides some functions which emulate
-the corresponding CORE functions
+the corresponding CORE:: functions
 to manipulate multiple-byte character strings.
 
-This module uses the OOP syntax to tell methods
+This module uses the object-oriented syntax to tell methods
 in which charset the specified strings should be handled.
 
-INSTALLATION
+PREREQUISITES AND INSTALLATION
+
+Perl 5.003 or later.
+
+Exception:
+    String::Multibyte::Unicode is for Perl 5.8.0 or later.
+    Some tests provided for String::Multibyte will be skipped
+    silently on an older Perl.
 
 To install this module type the following:
 
@@ -27,15 +34,9 @@ To install this module type the following:
    make test
    make install
 
-PREREQUISITES
-
-Perl 5.003 or later.
-
-Carp, Exporter, strict, vars.
-
 COPYRIGHT AND LICENCE
 
-Copyright(C) 2001, SADAHIRO Tomoyuki. Japan. All rights reserved.
+Copyright(C) 2001-2002, SADAHIRO Tomoyuki. Japan. All rights reserved.
 
 This program is free software; you can redistribute it and/or 
 modify it under the same terms as Perl itself.

@@ -1,5 +1,16 @@
 Revision history for Perl extension String::Multibyte.
 
+1.00  Mon Nov 11 22:45:21 2002
+    - new() can cope with a hashref (not only a module name).
+    - add UTF16BE.pm and UTF16LE.pm.
+    - Surrogate characters are excluded from the character order
+      in String::Multibyte::UTF8. (Now the next to U+D7FF is U+E000.)
+    - bug fix: strtr() did not carp even if 1st parameter is a reference
+      to a malformed string, and VERBOSE is true.
+    - Unicode.pm revived (only for Perl 5.8.0 or later).
+      Some tests are provided for Unicode.pm.
+      These tests will be skipped silently on an older Perl.
+
 0.07  Sat Oct 06 19:48:21 2001
     - strsplit() of an empty string should return an empty list.
 
