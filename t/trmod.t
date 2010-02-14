@@ -51,7 +51,7 @@ for $cs (qw/Bytes EUC EUC_JP ShiftJIS
     @lc = ("", "i", "ia", "ais", "asib","aba");
     @mod = ("", "d", "c", "cd", "s", "sd", "sc", "scd");
     $str = "THIS IS A PEN. YOU ARE A RABBIT.";
-
+    $^W = 0;
     for $m (0..$#mod) {
 	$NG = 0;
 	for $i (0..$#uc) {
@@ -66,7 +66,7 @@ for $cs (qw/Bytes EUC EUC_JP ShiftJIS
 		++$NG unless $strC eq str2asc($cs, $strM) && $cntC == $cntM;
 	    }
 	}
-	print ! $NG ? "ok" : "not ok", " ", ++$loaded, "\n"; 
+	print ! $NG ? "ok" : "not ok", " ", ++$loaded, "\n";
     }
 }
 

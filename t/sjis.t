@@ -90,7 +90,7 @@ print $tostr1 eq $restr1 && $tostr2 eq $restr2
     ? "ok" : "not ok", " 11\n";
 
 $str = "\x00\x00\x30\x00\x00\x42\x00\x00\x30\x00\x42\x00";
-print $] < 5.004 || 1
+print $] < 5.005 || 1
     && $mb->index($str, "\x00\x30\x00\x42\x00") == 7
     && $mb->index($str, "\x00\x30\x00\x00\x00") == -1
     && $mb->index($str, "\x00\x00\x30\x00") == 0

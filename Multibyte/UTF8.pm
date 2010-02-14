@@ -1,16 +1,10 @@
 package String::Multibyte::UTF8;
 
 use vars qw($VERSION);
-$VERSION = '1.02';
+$VERSION = '1.06';
 
 +{
     charset  => 'UTF-8',
-
-#   regexp   => '(?:[\x00-\x7F]|[\xC2-\xDF][\x80-\xBF]|' .
-#	'\xE0[\xA0-\xBF][\x80-\xBF]|[\xE1-\xEF][\x80-\xBF][\x80-\xBF]|' .
-#	'\xF0[\x90-\xBF][\x80-\xBF][\x80-\xBF]|' .
-#	'[\xF1-\xF3][\x80-\xBF][\x80-\xBF][\x80-\xBF]|' .
-#	'\xF4[\x80-\x8F][\x80-\xBF][\x80-\xBF])',
 
     regexp   => '(?:[\x00-\x7F]|[\xC2-\xDF][\x80-\xBF]|' .
 	'\xE0[\xA0-\xBF][\x80-\xBF]|\xED[\x80-\x9F][\x80-\xBF]|' .
@@ -94,7 +88,5 @@ Surrogate characters C<U+D800..U+DFFF> are excluded.
 =head1 SEE ALSO
 
 L<String::Multibyte>
-
-L<http://www.unicode.org/unicode/reports/tr28#3_1_conformance>
 
 =cut

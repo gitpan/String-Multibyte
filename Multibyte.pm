@@ -18,7 +18,7 @@ require Exporter;
 @ISA = qw(Exporter);
 @EXPORT = qw();
 
-$VERSION = '1.05';
+$VERSION = '1.06';
 
 my $PACKAGE = 'String::Multibyte'; # __PACKAGE__
 
@@ -715,7 +715,7 @@ It returns the instance to tell methods in which charset
 the specified strings should be handled.
 
 C<CHARSET> may be a hashref; this is how to define a charset
-without F<.pm> file.
+without any F<.pm> file.
 
     # see perlfaq6  :-)
     my $martian  = String::Multibyte->new({
@@ -855,7 +855,7 @@ returned if a reference of scalar variable is used as the first argument.
 
     CORE::substr($str,$off,$len) = $replace;
 
-The returned lvalue is not multibyte character-oriented but byte-oriented,
+The returned lvalue is not multibyte-aware,
 then successive assignment may lead to odd results.
 
 =back
@@ -1066,8 +1066,8 @@ This modules supposes C<$[> is always equal to C<0>, never C<1>.
 
 Since v. 1.01, manipulation of sequence of graphemes is to be supported.
 
-In a grapheme-oriented manipulation, notice that
-the beginning and the end of a string are always on a grapheme boundary.
+In a grapheme-aware manipulation, notice that
+the beginning and the end of a string always lie on a grapheme boundary.
 
 E.g. imagine a grapheme set where a grapheme comprises
 either a leading latin capital letter followed by one or more
@@ -1087,15 +1087,12 @@ So the result of this must be C<-1> (meaning B<no match>).
 
 =head1 AUTHOR
 
-SADAHIRO, Tomoyuki
+SADAHIRO Tomoyuki <SADAHIRO@cpan.org>
 
-    SADAHIRO@cpan.org
-    http://homepage1.nifty.com/nomenclator/perl/
+Copyright(C) 2001-2010, SADAHIRO Tomoyuki. Japan. All rights reserved.
 
-    Copyright(C) 2001-2003; Tomoyuki, SADAHIRO. Japan. All rights reserved.
-
-This program is free software; you can redistribute it and/or
-modify it under the same terms as Perl itself.
+This module is free software; you can redistribute it
+and/or modify it under the same terms as Perl itself.
 
 =head1 SEE ALSO
 

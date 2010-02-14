@@ -1,10 +1,10 @@
 package String::Multibyte::ShiftJIS;
 
 use vars qw($VERSION);
-$VERSION = '1.02';
+$VERSION = '1.06';
 
 +{
-    charset  => 'Shift_JIS',
+    charset  => 'Shift-JIS',
 
     regexp   => '(?:[\x00-\x7F\xA1-\xDF]|' .
 	'[\x81-\x9F\xE0-\xFC][\x40-\x7E\x80-\xFC])',
@@ -46,7 +46,7 @@ __END__
 =head1 NAME
 
 String::Multibyte::ShiftJIS - internally used by String::Multibyte
-for Shift_JIS
+for Shift-JIS
 
 =head1 SYNOPSIS
 
@@ -58,7 +58,7 @@ for Shift_JIS
 =head1 DESCRIPTION
 
 C<String::Multibyte::ShiftJIS> is used for manipulation of strings
-in Shift_JIS family encodings.
+in Shift-JIS family encodings.
 
 Byte range of single-byte characters:
 C<0x00..0x7F> and C<0xA1..0xDF>.

@@ -1,5 +1,11 @@
 Revision history for Perl extension String::Multibyte.
 
+1.06  Sun Feb 14 19:33:20 2010
+    - trmod.t: silence perl 5.11.x warning.
+    - using \p{GraphemeExtend} in Grapheme.pm
+    - s/\bShift_JIS\b/Shift-JIS/g in ShiftJIS.pm.
+    - doc tweak for UTF-8.pm.
+
 1.05  Sat Jun 07 20:46:18 2003
     - made POD in ASCII.
     - SEARCHLIST and REPLACEMENTLIST for strspn, strcspn, strtr, trclosure

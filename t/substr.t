@@ -126,7 +126,7 @@ for $cs (qw/Bytes EUC EUC_JP ShiftJIS
     $NG = 0;
     for $i (-8..8) {
 	local $^W = 0;
-	$s = $str; 
+	$s = $str;
 	$t = $zen;
 	substr($s,$i) = $rep{Bytes};
 	${ $mb->substr(\$t,$i) } = $rep{$cs};
@@ -138,7 +138,7 @@ for $cs (qw/Bytes EUC EUC_JP ShiftJIS
     for $i (-8..8) {
 	for $j (undef,-10..10) {
 	    local $^W = 0;
-	    $s = $str; 
+	    $s = $str;
 	    $t = $zen;
 	    substr($s,$i,$j) = $rep{Bytes};
 	    ${ $mb->substr(\$t,$i,$j) } = $rep{$cs};
@@ -152,7 +152,7 @@ for $cs (qw/Bytes EUC EUC_JP ShiftJIS
 	last if 5.005 > $];
 	for $j (-10..10) {
 	    local $^W = 0;
-	    $s = $str; 
+	    $s = $str;
 	    $t = $zen;
 	    $core = ''; # avoid "used only once"
 	    eval q{ $core = substr($s,$i,$j, $rep{Bytes}) };
