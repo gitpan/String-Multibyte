@@ -2,6 +2,7 @@ Multibyte.pm
 Changes
 Makefile.PL
 MANIFEST
+META.yml
 README
 Multibyte/Big5.pm
 Multibyte/Big5Plus.pm

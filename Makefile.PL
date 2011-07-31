@@ -1,7 +1,9 @@
 use ExtUtils::MakeMaker;
-# See lib/ExtUtils/MakeMaker.pm for details of how to influence
-# the contents of the Makefile that is written.
+
 WriteMakefile(
-    'NAME'	=> 'String::Multibyte',
-    'VERSION_FROM' => 'Multibyte.pm', # finds $VERSION
+    'NAME'		=> 'String::Multibyte',
+    'VERSION_FROM'	=> 'Multibyte.pm',
+    'ABSTRACT_FROM'	=> 'Multibyte.pm',
+    'AUTHOR'		=> 'SADAHIRO Tomoyuki <SADAHIRO@cpan.org>',
+    'LICENSE'		=> 'perl',
 );

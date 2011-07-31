@@ -2,7 +2,7 @@ package String::Multibyte::Grapheme;
 
 require 5.008;
 use vars qw($VERSION);
-$VERSION = '1.06';
+$VERSION = '1.10';
 
 our $CRLF    = qr/(?:\cM\cJ)/;
 our $Control = qr/(?!\cM\cJ)[\p{Zl}\p{Zp}\p{Cc}\p{Cf}]/;
@@ -54,8 +54,10 @@ Grapheme ranges (no, no longer character ranges) are not supported.
 
 This module is based on default grapheme clusters according to
 Unicode Standard Annex #29 for Unicode 4.0.0 (UAX #29-4), which is
-similar to legacy grapheme clusters after Unicode 5.1.0 (UAX #29-13)
-but dose not care ZWNJ, ZWJ, etc.
+similar to legacy grapheme clusters of Unicode 5.1.0 (UAX #29-13)
+or later.
+
+B<WHAT THIS MODULE DOES IS OLD.>
 
 =head1 SEE ALSO
 
