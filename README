@@ -1,4 +1,4 @@
-String::Multibyte.pm version 1.06
+String::Multibyte.pm version 1.11
 ================
 
 String::Multibyte - locale-independent manipulation
@@ -47,7 +47,7 @@ COPYRIGHT AND LICENSE
 
 SADAHIRO Tomoyuki <SADAHIRO@cpan.org>
 
-Copyright(C) 2001-2010, SADAHIRO Tomoyuki. Japan. All rights reserved.
+Copyright(C) 2001-2014, SADAHIRO Tomoyuki. Japan. All rights reserved.
 
 This module is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

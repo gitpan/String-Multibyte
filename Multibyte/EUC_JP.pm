@@ -1,7 +1,7 @@
 package String::Multibyte::EUC_JP;
 
 use vars qw($VERSION);
-$VERSION = '1.02';
+$VERSION = '1.11';
 
 +{
     charset  => 'EUC-JP',
@@ -96,6 +96,3 @@ Unassigned G2 (C<0x8EE0..0x8EFE>) are now included.
 L<String::Multibyte>
 
 =cut
-
-
-#

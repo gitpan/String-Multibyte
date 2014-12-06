@@ -1,7 +1,7 @@
 package String::Multibyte::EUC_TW;
 
 use vars qw($VERSION);
-$VERSION = '1.02';
+$VERSION = '1.11';
 
 +{
     charset  => 'EUC-TW',
@@ -93,4 +93,3 @@ Plane 1 characters in G1 (e.g. C<0xA1A1>) and those in G2
 L<String::Multibyte>
 
 =cut
-

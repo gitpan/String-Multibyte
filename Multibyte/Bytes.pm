@@ -1,11 +1,11 @@
 package String::Multibyte::Bytes;
 
 use vars qw($VERSION);
-$VERSION = '1.01';
+$VERSION = '1.11';
 
 +{
     charset  => 'bytes',
-    regexp   => $] >= 5.006 ? '\C' : '[\x00-\xFF]',
+    regexp   => '[\x00-\xFF]',
     nextchar =>
 	sub {
 	    my $c = unpack('C', shift);
@@ -38,4 +38,3 @@ Character order: C<0x00..0xff>
 L<String::Multibyte>
 
 =cut
-

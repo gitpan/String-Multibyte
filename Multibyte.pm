@@ -18,7 +18,7 @@ require Exporter;
 @ISA = qw(Exporter);
 @EXPORT = qw();
 
-$VERSION = '1.10';
+$VERSION = '1.11';
 
 my $PACKAGE = 'String::Multibyte'; # __PACKAGE__
 
@@ -1089,7 +1089,7 @@ So the result of this must be C<-1> (meaning B<no match>).
 
 SADAHIRO Tomoyuki <SADAHIRO@cpan.org>
 
-Copyright(C) 2001-2010, SADAHIRO Tomoyuki. Japan. All rights reserved.
+Copyright(C) 2001-2014, SADAHIRO Tomoyuki. Japan. All rights reserved.
 
 This module is free software; you can redistribute it
 and/or modify it under the same terms as Perl itself.

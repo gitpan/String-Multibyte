@@ -1,5 +1,10 @@
 Revision history for Perl extension String::Multibyte.
 
+1.11  Sat Dec  6 11:57:03 2014
+    - Bytes.pm avoids /\C/. Its behavior with perl's Unicode support should
+      change. No longer expect it works for "wide" characters like \x{100}.
+    - EUC_JP.pm and EUC_TW.pm: just remove empty lines at the file end.
+
 1.10  Sun Jul 31 14:31:16 2011
     - fix the tarball with world writable files.
 

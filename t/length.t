@@ -83,11 +83,8 @@ if ($] < 5.008) {
 
     print 0 == $bytes->length("")
       &&  3 == $bytes->length("abc")
-      && 15 == $bytes->length(pack 'U*',
-	0xFF71,0xFF72,0xFF73,0xFF74,0xFF75)
-      && 12 == $bytes->length(pack 'U*', 0x3042,0x304B,0x3055,0x305F)
-      && 17 == $bytes->length('AIUEO'.
-	pack 'U*', 0x65E5, 0x672C,0x6F22,0x5B57)
+      &&  5 == $bytes->length(pack 'C*', 0xF1,0xF2,0xF3,0xF4,0xF5)
+      &&  9 == $bytes->length('AIUEO'.pack 'C*', 0xE5, 0x2C,0x22,0x57)
       ? "ok" : "not ok", " 8\n";
 }
 
